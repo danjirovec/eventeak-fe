@@ -15,11 +15,14 @@ import camelcase from 'camelcase';
 import VariableOptions from 'gql-query-builder/build/VariableOptions';
 import set from 'lodash/set';
 
-export const AUTH_API_BASE_URL = 'http://localhost:3000/auth/user';
-export const CLOUDINARY_API_BASE_URL = 'http://localhost:3000/images';
-export const API_URL = 'http://localhost:3000/graphql';
+export const BASE_API_URL = import.meta.env.PROD
+  ? 'https://applausio-be.onrender.com/'
+  : 'http://localhost:3000/';
+export const GRAPHQL_API_URL = import.meta.env.PROD
+  ? 'https://applausio-be.onrender.com/graphql'
+  : 'http://localhost:3000/graphql';
 
-export const client = new GraphQLClient(API_URL, {
+export const client = new GraphQLClient(GRAPHQL_API_URL, {
   fetch: (url: string, options: RequestInit) => {
     try {
       return fetchWrapper(url, options);
