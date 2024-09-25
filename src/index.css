@@ -1,0 +1,28 @@
+.fc .fc-col-header-cell-cushion {
+  color: black;
+  font-weight: 400;
+}
+
+.fc .fc-daygrid-day-number {
+  color: black;
+  font-weight: 400;
+}
+
+.fc .fc-daygrid-dot-event {
+  color: black;
+  font-weight: 400;
+}
+
+.fc .fc-daygrid-dot-event:hover {
+  background-color: #cce4e0;
+}
+
+.fc .fc-list-day-text {
+  color: black;
+  font-weight: 400;
+}
+
+.fc .fc-list-day-side-text {
+  color: black;
+  font-weight: 400;
+}
