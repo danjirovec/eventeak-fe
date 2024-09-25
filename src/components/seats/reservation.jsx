@@ -2,7 +2,7 @@ import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { fabric } from "fabric";
 import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { THEME } from "../utils/globals";
+import THEME from "/util/globals";
 const seatColor = THEME.secondary;
 class RowGroup {
   groupId = -1;
@@ -73,7 +73,7 @@ const SeatReservation = () => {
   function hanldeMouseOver(e) {
 
     if (canvas.isDragging) {
-      var vpt = canvas.viewportTransform;
+      const vpt = canvas.viewportTransform;
       vpt[4] += e.clientX - canvas.lastPosX;
       vpt[5] += e.clientY - canvas.lastPosY;
       canvas.requestRenderAll();
@@ -86,10 +86,12 @@ const SeatReservation = () => {
     e.preventDefault();
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const text = e.target.result;
-      const jsonDesign = JSON.parse(text);
-      console.log(jsonDesign);
-      loadDesign(jsonDesign);
+      if (e.target) {
+        const text = e.target.result;
+        const jsonDesign = JSON.parse(text);
+        console.log(jsonDesign);
+        loadDesign(jsonDesign);
+      }
     };
     if (e.target.files.length != 0) reader.readAsText(e.target.files[0]);
   };
@@ -105,14 +107,14 @@ const SeatReservation = () => {
     groups = {};
     categories = [...json.categories];
 
-    for (let key in json.groups) {
-      groups[key] = { ...json.groups[key] };
+    for (const key in json.groups) {
+      (groups)[key] = { ...json.groups[key] };
       let pos = [json.groups[key].startX, json.groups[key].startY];
       const u = [...json.groups[key].directionUnitVector];
       const numberOfSeats = json.groups[key].numberOfSeats;
       const c = 2 * r + json.groups[key].spacing / 2;
       const startFrom = json.groups[key].startSeatsFrom;
-      groups[key].seats = json.groups[key].seats;
+     (groups)[key].seats = json.groups[key].seats;
 
       // row label
       const text = new fabric.Text(`${json.groups[key].label}`, {
