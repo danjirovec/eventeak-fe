@@ -10,6 +10,7 @@ import SupaUpload from 'components/upload/supaUpload';
 import { uploadEdit } from 'components/upload/util';
 import { getAuth } from 'util/get-auth';
 import { SendOutlined } from '@ant-design/icons';
+import { BASE_API_URL } from 'providers';
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
@@ -46,7 +47,7 @@ export const EditBusiness = () => {
 
   const handleOnClick = async () => {
     try {
-      const response = await fetch('http://localhost:3000/invite', {
+      const response = await fetch(`${BASE_API_URL}invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
