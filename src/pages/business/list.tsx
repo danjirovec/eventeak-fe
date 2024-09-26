@@ -6,7 +6,6 @@ import {
   EditButton,
   FilterDropdown,
   List,
-  ShowButton,
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo } from '@refinedev/core';
@@ -24,7 +23,7 @@ export const BusinessList = ({ children }: React.PropsWithChildren) => {
   const go = useGo();
 
   const { tableProps, filters } = useTable({
-    resource: 'userBusinesses',
+    resource: 'getUserBusinesses',
     onSearch: (values: any) => {
       return [
         {

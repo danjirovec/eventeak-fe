@@ -39,8 +39,6 @@ export const Home = () => {
     },
   });
 
-  console.log(metrics);
-
   const { selectProps, queryResult } = useSelect<
     GetFieldsFromList<UserBusinessesListQuery>
   >({

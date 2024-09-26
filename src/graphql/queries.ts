@@ -422,6 +422,7 @@ export const CUSTOM_BUSINESSES_QUERY = gql`
         name
         apiKey
         logoUrl
+        currency
       }
     }
   }
