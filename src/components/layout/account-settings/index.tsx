@@ -26,7 +26,7 @@ import {
 
 import {
   UPDATE_USER_MUTATION,
-  UPDATE_USER_PASSWORD_MUTATION,
+  UPDATE_PASSWORD_MUTATION,
 } from 'graphql/mutations';
 
 import { Text } from '../../text';
@@ -399,7 +399,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
               id,
               resource: 'users',
               meta: {
-                gqlMutation: UPDATE_USER_PASSWORD_MUTATION,
+                gqlMutation: UPDATE_PASSWORD_MUTATION,
                 customType: true,
               },
             }}

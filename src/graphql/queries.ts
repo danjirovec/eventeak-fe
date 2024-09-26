@@ -72,10 +72,10 @@ export const CUSTOMERS_QUERY = gql`
   }
 `;
 
-// Query to get counts
-export const COUNTS_QUERY = gql`
-  query Counts($meta: String!) {
-    businessCounts(meta: $meta) {
+// Query to get business metrics
+export const BUSINESS_METRICS_QUERY = gql`
+  query BusinessMetrics($meta: String!) {
+    getBusinessMetrics(meta: $meta) {
       customers
       events
       memberships
@@ -129,6 +129,7 @@ export const SECTIONS_QUERY = gql`
   }
 `;
 
+// Query to get event price categories
 export const EVENT_PRICE_CATEGORY_QUERY = gql`
   query EventPriceCategoryList(
     $filter: EventPriceCategoryFilter!
@@ -410,7 +411,7 @@ export const CUSTOM_BUSINESSES_QUERY = gql`
     $paging: OffsetPaging!
     $meta: String!
   ) {
-    userBusinesses(
+    getUserBusinesses(
       filter: $filter
       sorting: $sorting
       paging: $paging

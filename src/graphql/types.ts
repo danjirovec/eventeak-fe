@@ -38,7 +38,7 @@ export type CreateTemplateMutationVariables = Types.Exact<{
 }>;
 
 export type CreateTemplateMutation = {
-  createEventTemplateAndEventPriceCategory: Pick<
+  createEventTemplate: Pick<
     Types.EventTemplate,
     | 'name'
     | 'category'
@@ -87,10 +87,7 @@ export type CreateBusinessMutationVariables = Types.Exact<{
 }>;
 
 export type CreateBusinessMutation = {
-  createBusinessAndBusinessUserAdmin: Pick<
-    Types.Business,
-    'name' | 'apiKey' | 'logoUrl'
-  >;
+  createBusiness: Pick<Types.Business, 'name' | 'apiKey' | 'logoUrl'>;
 };
 
 export type CreateVenueMutationVariables = Types.Exact<{
@@ -98,7 +95,7 @@ export type CreateVenueMutationVariables = Types.Exact<{
 }>;
 
 export type CreateVenueMutation = {
-  createVenueWithSeats: Pick<
+  createVenue: Pick<
     Types.Venue,
     | 'name'
     | 'capacity'
@@ -158,13 +155,10 @@ export type UpdateUserMutation = {
 };
 
 export type UpdateUserPasswordMutationVariables = Types.Exact<{
-  input: Types.UpdateUserPassword;
+  input: Types.UpdatePassword;
 }>;
 
-export type UpdateUserPasswordMutation = Pick<
-  Types.Mutation,
-  'updateUserPassword'
->;
+export type UpdateUserPasswordMutation = Pick<Types.Mutation, 'updatePassword'>;
 
 export type UpdateEventMutationVariables = Types.Exact<{
   input: Types.UpdateEvent;
@@ -194,7 +188,7 @@ export type UpdateTemplateMutationVariables = Types.Exact<{
 }>;
 
 export type UpdateTemplateMutation = {
-  updateEventTemplateAndEventPriceCategory: Pick<
+  updateEventTemplate: Pick<
     Types.EventTemplate,
     | 'id'
     | 'name'
@@ -295,13 +289,13 @@ export type CustomersListQuery = {
   };
 };
 
-export type CountsQueryVariables = Types.Exact<{
+export type BusinessMetricsQueryVariables = Types.Exact<{
   meta: Types.Scalars['String']['input'];
 }>;
 
-export type CountsQuery = {
-  businessCounts: Pick<
-    Types.CountsBusiness,
+export type BusinessMetricsQuery = {
+  getBusinessMetrics: Pick<
+    Types.BusinessMetrics,
     'customers' | 'events' | 'memberships'
   >;
 };
@@ -425,7 +419,7 @@ export type TicketsListQuery = {
   tickets: Pick<Types.TicketConnection, 'totalCount'> & {
     nodes: Array<
       Pick<Types.Ticket, 'id' | 'price' | 'validated' | 'created'> & {
-        discount?: Types.Maybe<Pick<Types.Discount, 'id'>>;
+        discount?: Types.Maybe<Pick<Types.Discount, 'id' | 'name'>>;
         user?: Types.Maybe<Pick<Types.User, 'id' | 'firstName' | 'lastName'>>;
         event: Pick<Types.Event, 'id' | 'name' | 'date'>;
         seat?: Types.Maybe<Pick<Types.Seat, 'id' | 'row' | 'seat'>>;
@@ -549,7 +543,7 @@ export type CustomBusinessesListQueryVariables = Types.Exact<{
 }>;
 
 export type CustomBusinessesListQuery = {
-  userBusinesses: {
+  getUserBusinesses: {
     nodes: Array<Pick<Types.Business, 'id' | 'name' | 'apiKey' | 'logoUrl'>>;
   };
 };

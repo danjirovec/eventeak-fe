@@ -42,7 +42,7 @@ export const CREATE_EVENT_MUTATION = gql`
 // Mutation to create template
 export const CREATE_TEMPLATE_MUTATION = gql`
   mutation CreateTemplate($input: CreateEventTemplate!) {
-    createEventTemplateAndEventPriceCategory(input: $input) {
+    createEventTemplate(input: $input) {
       name
       category
       venue {
@@ -104,7 +104,7 @@ export const CREATE_MEMBERSHIP_TYPE_MUTATION = gql`
 // Mutation to create business
 export const CREATE_BUSINESS_MUTATION = gql`
   mutation CreateBusiness($input: CreateBusiness!) {
-    createBusinessAndBusinessUserAdmin(input: $input) {
+    createBusiness(input: $input) {
       name
       apiKey
       logoUrl
@@ -115,7 +115,7 @@ export const CREATE_BUSINESS_MUTATION = gql`
 // Mutation to create venue
 export const CREATE_VENUE_MUTATION = gql`
   mutation CreateVenue($input: CreateVenue!) {
-    createVenueWithSeats(input: $input) {
+    createVenue(input: $input) {
       name
       capacity
       buildingNumber
@@ -206,10 +206,10 @@ export const UPDATE_USER_MUTATION = gql`
   }
 `;
 
-// Mutation to update user password
-export const UPDATE_USER_PASSWORD_MUTATION = gql`
-  mutation UpdateUserPassword($input: UpdateUserPassword!) {
-    updateUserPassword(input: $input)
+// Mutation to update password
+export const UPDATE_PASSWORD_MUTATION = gql`
+  mutation UpdateUserPassword($input: UpdatePassword!) {
+    updatePassword(input: $input)
   }
 `;
 
@@ -242,10 +242,10 @@ export const UPDATE_EVENT_MUTATION = gql`
   }
 `;
 
-// Mutation to update event
+// Mutation to update event template
 export const UPDATE_TEMPLATE_MUTATION = gql`
   mutation UpdateTemplate($input: UpdateEventTemplate!) {
-    updateEventTemplateAndEventPriceCategory(input: $input) {
+    updateEventTemplate(input: $input) {
       id
       name
       category

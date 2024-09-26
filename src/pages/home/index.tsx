@@ -5,7 +5,7 @@ import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { DashboardTotalCountCard } from 'components/home';
 import { useCustom, useList } from '@refinedev/core';
 import {
-  COUNTS_QUERY,
+  BUSINESS_METRICS_QUERY,
   EVENTS_QUERY,
   USER_BUSINESSES_QUERY,
 } from 'graphql/queries';
@@ -26,18 +26,20 @@ export const Home = () => {
   const { setSharedValue } = useShared();
 
   const {
-    data: counts,
-    isLoading: countsLoading,
+    data: metrics,
+    isLoading: metricsLoading,
     refetch: countsRefetch,
   } = useCustom({
     url: '',
     method: 'post',
     meta: {
-      gqlQuery: COUNTS_QUERY,
+      gqlQuery: BUSINESS_METRICS_QUERY,
       empty: getBusiness().id ? false : true,
       meta: JSON.stringify({ businessId: getBusiness().id }),
     },
   });
+
+  console.log(metrics);
 
   const { selectProps, queryResult } = useSelect<
     GetFieldsFromList<UserBusinessesListQuery>
@@ -106,10 +108,10 @@ export const Home = () => {
   });
 
   useEffect(() => {
-    if (!countsLoading && !queryResult.isLoading && !eventsLoading) {
+    if (!metricsLoading && !queryResult.isLoading && !eventsLoading) {
       setIsDashLoading(false);
     }
-  }, [countsLoading, queryResult.isLoading, eventsLoading]);
+  }, [metricsLoading, queryResult.isLoading, eventsLoading]);
 
   const handleBusinessChange = (value: any, option: any) => {
     setBusiness(option.title, value);
@@ -173,7 +175,9 @@ export const Home = () => {
             <DashboardTotalCountCard
               resource="customers"
               isLoading={isDashLoading}
-              counts={counts?.data ? counts.data.businessCounts.customers : []}
+              counts={
+                metrics?.data ? metrics.data.getBusinessMetrics.customers : []
+              }
             />
           </Col>
           <Col xs={24} sm={24} xl={8} style={{ height: 115 }}>
@@ -181,7 +185,7 @@ export const Home = () => {
               resource="memberships"
               isLoading={isDashLoading}
               counts={
-                counts?.data ? counts.data.businessCounts.memberships : []
+                metrics?.data ? metrics.data.getBusinessMetrics.memberships : []
               }
             />
           </Col>
@@ -189,7 +193,9 @@ export const Home = () => {
             <DashboardTotalCountCard
               resource="events"
               isLoading={isDashLoading}
-              counts={counts?.data ? counts.data.businessCounts.events : []}
+              counts={
+                metrics?.data ? metrics.data.getBusinessMetrics.events : []
+              }
             />
           </Col>
         </Row>
