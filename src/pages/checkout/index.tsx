@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SeatReservation from 'components/seats/reservation';
 import { useCreate, useList, useNavigation, useParsed } from '@refinedev/core';
 import { EVENT_CHECKOUT_QUERY } from 'graphql/queries';
@@ -41,7 +41,6 @@ export const Checkout = () => {
   const [user, setUser] = useState<User | null>();
   const [removed, setRemoved] = useState(0);
   const [total, setTotal] = useState(0);
-  const [action, setAction] = useState(false);
   const { edit } = useNavigation();
 
   const { mutate, isLoading: mutationLoading } = useCreate({
@@ -181,11 +180,11 @@ export const Checkout = () => {
 
   const handleRemoveTicket = (id: string, epc = false) => {
     if (epc) {
-      const ticks = tickets.toReversed();
-      const index = ticks.findIndex((item) => item.epc.id == id);
+      const ticks = tickets.slice().reverse();
+      const index = ticks.findIndex((item: any) => item.epc.id == id);
       if (index !== -1) {
         ticks.splice(index, 1);
-        setTickets(ticks.toReversed());
+        setTickets(ticks.slice().reverse());
       }
     } else {
       const updatedTickets = tickets.filter((item: any) => item.id !== id);
