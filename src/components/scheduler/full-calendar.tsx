@@ -54,7 +54,13 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
     undefined,
   );
 
-  const { formProps, onFinish, form, formLoading } = useForm({
+  const {
+    formProps,
+    onFinish,
+    form,
+    formLoading,
+    mutation: { isLoading },
+  } = useForm({
     action: 'create',
     resource: 'events',
     redirect: false,
@@ -144,7 +150,7 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
           <Button
             key="submit"
             type="primary"
-            loading={formLoading}
+            loading={isLoading}
             onClick={handleOk}
           >
             Create

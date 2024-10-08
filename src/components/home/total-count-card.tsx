@@ -90,7 +90,7 @@ const DashboardTotalCountCard = ({ resource, isLoading, counts }: Props) => {
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
                 textAlign: 'start',
-                marginLeft: 48,
+                marginLeft: 28,
                 fontVariant: 'tabular-nums',
               }}
             >

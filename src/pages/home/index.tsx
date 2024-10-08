@@ -160,7 +160,7 @@ export const Home = () => {
                   showSearch={false}
                 />
               ) : (
-                <SelectSkeleton />
+                <SelectSkeleton width={300} />
               )}
             </div>
           </Col>
@@ -210,6 +210,7 @@ export const Home = () => {
           xl={8}
           style={{
             height: '460px',
+            marginBottom: 50,
           }}
         >
           <h2>Upcoming events</h2>

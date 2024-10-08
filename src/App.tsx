@@ -59,7 +59,9 @@ import {
   CloneBusiness,
   CloneBenefit,
   CloneVenue,
+  Checkout,
   CloneEvent,
+  Map,
 } from './pages';
 import Layout from './components/layout';
 import { resources } from './config/resources';
@@ -67,6 +69,7 @@ import { SharedProvider } from './providers/context/business';
 import './index.css';
 import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
+import DevProtect from './providers/dev.auth';
 
 function App() {
   dayjs.extend(updateLocale);
@@ -74,6 +77,7 @@ function App() {
     weekStart: 1,
   });
   return (
+    // <DevProtect>
     <BrowserRouter>
       <RefineKbarProvider>
         <ConfigProvider
@@ -197,6 +201,7 @@ function App() {
                     <Route path="edit/:id" element={<EditOrder />} />
                   </Route>
                   <Route path="/scheduler" element={<CalendarPageWrapper />} />
+                  <Route path="/checkout" element={<Checkout />} />
                 </Route>
 
                 <Route
@@ -230,6 +235,8 @@ function App() {
                   />
                 </Route>
 
+                <Route path="/map" element={<Map />} />
+
                 <Route
                   element={
                     <Authenticated key="catch-all">
@@ -247,6 +254,7 @@ function App() {
         </ConfigProvider>
       </RefineKbarProvider>
     </BrowserRouter>
+    // </DevProtect>
   );
 }
 

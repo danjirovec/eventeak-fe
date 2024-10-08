@@ -30,9 +30,15 @@ const Header = () => {
           lineHeight: 0,
         }}
       >
-        <div style={{ display: 'flex', marginRight: 10, alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            marginRight: 10,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <ShopOutlined style={{ marginRight: 10 }} />
-          <p style={{ marginBottom: 0, marginRight: 5 }}>Business:</p>
           <p style={{ marginBottom: 0 }}>
             <strong>{getBusiness().name || 'No data'}</strong>
           </p>

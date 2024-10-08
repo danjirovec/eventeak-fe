@@ -119,7 +119,9 @@ export const OrderList = ({ children }: React.PropsWithChildren) => {
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>
-                  {record.user.firstName} {record.user.lastName}
+                  {record.user
+                    ? `${record.user.firstName} ${record.user.firstName}`
+                    : '-'}
                 </Text>
               </Space>
             )}

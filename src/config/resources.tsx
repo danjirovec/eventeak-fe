@@ -1,6 +1,7 @@
 import {
   BuildOutlined,
   CalendarOutlined,
+  CheckOutlined,
   DashboardOutlined,
   GiftOutlined,
   HeartOutlined,
@@ -169,6 +170,14 @@ export const resources: IResourceItem[] = [
       label: 'Tickets',
       icon: <ScanOutlined />,
       parent: 'ticketManagement',
+    },
+  },
+  {
+    name: 'checkout',
+    list: '/checkout',
+    meta: {
+      label: 'Checkout',
+      icon: <ShoppingCartOutlined />,
     },
   },
 ];

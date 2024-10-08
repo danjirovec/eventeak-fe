@@ -6,14 +6,17 @@ import {
   EditButton,
   FilterDropdown,
   List,
-  ShowButton,
   getDefaultSortOrder,
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo, useNavigation } from '@refinedev/core';
-import { Input, Select, Space, Table } from 'antd';
+import { Button, Input, Select, Space, Table } from 'antd';
 import { EVENTS_QUERY } from 'graphql/queries';
-import { CopyOutlined, FilterFilled } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  FilterFilled,
+  ShoppingCartOutlined,
+} from '@ant-design/icons';
 import { Text } from 'components/text';
 import { Event } from 'graphql/schema.types';
 import { formatDate, shortenString } from '../../util';
@@ -24,7 +27,7 @@ import { CategoryTag } from 'components';
 export const EventList = ({ children }: React.PropsWithChildren) => {
   useDocumentTitle('Events - Applausio');
   const go = useGo();
-  const { edit } = useNavigation();
+  const { edit, replace } = useNavigation();
   const { tableProps, filters, sorters } = useTable({
     resource: 'events',
     onSearch: (values: any) => {
@@ -219,6 +222,11 @@ export const EventList = ({ children }: React.PropsWithChildren) => {
             fixed="right"
             render={(value) => (
               <Space>
+                <Button
+                  onClick={() => replace(`/checkout?eventId=${value}`)}
+                  style={{ width: 24, height: 24 }}
+                  icon={<ShoppingCartOutlined width={24} height={24} />}
+                />
                 <EditButton hideText size="small" recordItemId={value} />
                 <CloneButton
                   hideText

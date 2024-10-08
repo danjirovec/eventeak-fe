@@ -33,7 +33,7 @@ class RowGroup {
   spacing = -1;
   numberOfSeats = 0;
   seats = [];
-  category = 'No section';
+  category = 'None';
   categoryColor = seatColor;
   label = -1;
   startSeatsFrom = 1;
@@ -112,7 +112,7 @@ const r = 7;
 const spacing = 2.5;
 const rowSpacing = 10;
 
-let categories = [['No section', seatColor]];
+let categories = [['None', seatColor]];
 
 // Improve perfomance by handle calnvas state outside the component
 
@@ -141,7 +141,15 @@ let startingSeat_1 = null;
 let donePreview = true;
 let firstTime = false;
 
-const SeatDesigner = forwardRef((props, ref) => {
+type KeyValueObject = {
+  [key: string]: string | Date | number | object;
+};
+
+const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
+  const { jsonData } = props;
+
+  console.log(jsonData);
+
   useImperativeHandle(ref, () => ({
     getData() {
       return exportToJson();
@@ -169,8 +177,9 @@ const SeatDesigner = forwardRef((props, ref) => {
   const primRotIn = useRef(null);
 
   useEffect(() => {
+    console.log('yo');
     firstTime = false;
-    categories = [['No section', seatColor]];
+    categories = [['None', seatColor]];
   }, []);
 
   const sectionAdded = (type: NotificationType) => {
@@ -225,6 +234,7 @@ const SeatDesigner = forwardRef((props, ref) => {
       top: editor.canvas.height / 2,
       originX: 'center',
       originY: 'center',
+      fontFamily: 'Inconsolata',
     });
     text.groupId = [];
     // text.groupId = currentGroupId;
@@ -250,16 +260,11 @@ const SeatDesigner = forwardRef((props, ref) => {
   };
 
   const getGroup = (groupId) => {
-    // const groupToBeSelected = [];
-    // for (let obj of editor.canvas.getObjects()) {
-    //   if (obj.groupId == groupId) groupToBeSelected.push(obj);
-    // }
     return groups[groupId].seats;
   };
 
   const onAddSeatToSelectedRowFromStart = () => {
     if (currSelectedGoup.length != 1) return;
-    // const group = getGroup(currSelectedGoup);
     const group = groups[currSelectedGoup[0]];
     if (!group) return;
 
@@ -327,20 +332,6 @@ const SeatDesigner = forwardRef((props, ref) => {
         const [v1x, v1y] = [x - sx, y - sy];
         const [v2x, v2y] = [x - ex, y - ey];
 
-        // const dot1 = v1x * v0x + v0y*v1y;
-
-        // const norm1 = Math.sqrt((v1x)*(v1x) + (v1y)*(v1y));
-        // const norm2 = Math.sqrt((v0x)*(v0x) + (v0y)*(v0y));
-
-        // const thetaRad = Math.acos(dot1/(norm1*norm2));
-
-        // const theta = thetaRad * 180 / Math.PI;
-
-        //       se the sign of the determinant of vectors (V0,V1), where M(X,Y) is the query point:
-
-        // position = sign((Bx - Ax) * (Y - Ay) - (By - Ay) * (X - Ax))
-
-        //
         const p = v0x * v1y - v0y * v1x;
 
         const d1 = v1x * v1x + v1y * v1y;
@@ -348,8 +339,6 @@ const SeatDesigner = forwardRef((props, ref) => {
 
         let d = d1 > d2 ? d2 : d1;
         d = Math.sqrt(d);
-        // direction of new rows is normal to vector V0
-        // dx = x2 - x1 and dy = y2 - y1, then the normals are (-dy, dx) and (dy, -dx).
         const [n1x, n1y] = [-v0y, v0x];
         const [n2x, n2y] = [v0y, -v0x];
 
@@ -992,6 +981,7 @@ const SeatDesigner = forwardRef((props, ref) => {
   };
 
   if (editor && !firstTime) {
+    console.log('acutal ini');
     firstTime = true;
     const width = canvasDivRef.current.clientWidth;
     const height = canvasDivRef.current.clientHeight;
@@ -1060,13 +1050,6 @@ const SeatDesigner = forwardRef((props, ref) => {
 
     editor.canvas.preserveObjectStacking = true;
   }
-
-  // useEffect(() => {
-  //   window.addEventListener("keydown", handleWindowClick);
-
-  //   return () => {window.removeEventListener("keydown", handleWindowClick);}
-
-  // }, [])
 
   const getNumberOfSeatsInGroup = () => {
     if (currSelectedGoup.length != 1) return 0;
@@ -1413,7 +1396,6 @@ const SeatDesigner = forwardRef((props, ref) => {
 
   const onAddCategory = () => {
     if (categoryName != '') {
-      // CHECK CATEGROY IS NOT DUPLIACATED
       for (const category of categories) {
         if (category[0] == categoryName) {
           sectionAddFailed('error');
@@ -1463,7 +1445,7 @@ const SeatDesigner = forwardRef((props, ref) => {
     const group = groups[currSelectedGoup[0]];
     if (!group) return;
     if (group.category) return group.category;
-    return 'No section';
+    return 'None';
   };
 
   const handleChangeStartSeat = (value) => {
@@ -1486,6 +1468,7 @@ const SeatDesigner = forwardRef((props, ref) => {
         newGroups[key].seats.push({
           number: i + groups[key].startSeatsFrom,
           reserved: false,
+          category: groups[key].category,
         });
       newGroups[key].group = null;
     }
@@ -1501,7 +1484,7 @@ const SeatDesigner = forwardRef((props, ref) => {
       categories: categories,
       primitives: primitives,
     };
-    categories = [['No section', seatColor]];
+    categories = [['None', seatColor]];
     groups = {};
     return myData;
   };
@@ -1518,25 +1501,25 @@ const SeatDesigner = forwardRef((props, ref) => {
     if (e.target.files.length != 0) reader.readAsText(e.target.files[0]);
   };
 
-  const loadDesign = (json) => {
+  const loadDesign = (jsonData) => {
     editor.canvas.clear();
 
     Object.keys(groups).forEach((key) => delete groups[key]);
 
     groups = {};
-    categories = [...json.categories];
+    categories = [...jsonData.categories];
 
-    for (const key in json.groups) {
-      groups[key] = { ...json.groups[key] };
-      let pos = [json.groups[key].startX, json.groups[key].startY];
-      const u = [...json.groups[key].directionUnitVector];
-      const numberOfSeats = json.groups[key].numberOfSeats;
-      const c = 2 * r + json.groups[key].spacing / 2;
-      const startFrom = json.groups[key].startSeatsFrom;
+    for (const key in jsonData.groups) {
+      groups[key] = { ...jsonData.groups[key] };
+      let pos = [jsonData.groups[key].startX, jsonData.groups[key].startY];
+      const u = [...jsonData.groups[key].directionUnitVector];
+      const numberOfSeats = jsonData.groups[key].numberOfSeats;
+      const c = 2 * r + jsonData.groups[key].spacing / 2;
+      const startFrom = jsonData.groups[key].startSeatsFrom;
       groups[key].seats = [];
 
       // row label
-      const text = new fabric.Text(`${json.groups[key].label}`, {
+      const text = new fabric.Text(`${jsonData.groups[key].label}`, {
         fontSize: r * 2,
         textAlign: 'center',
         originX: 'center',
@@ -1544,12 +1527,13 @@ const SeatDesigner = forwardRef((props, ref) => {
         fill: 'red',
         left: pos[0] - c * u[0] + r,
         top: pos[1] - c * u[1] + r,
+        fontFamily: 'Inconsolata',
       });
       editor.canvas.add(text);
       // draw row
       for (let i = 0; i < numberOfSeats; ++i) {
         const seat = new fabric.Circle({
-          fill: json.groups[key].categoryColor,
+          fill: jsonData.groups[key].categoryColor,
           top: pos[1],
           left: pos[0],
           radius: r,
@@ -1567,6 +1551,7 @@ const SeatDesigner = forwardRef((props, ref) => {
           originY: 'center',
           left: pos[0] + r,
           top: pos[1] + r,
+          fontFamily: 'Inconsolata',
         });
 
         seat.groupId = key;
@@ -1685,13 +1670,12 @@ const SeatDesigner = forwardRef((props, ref) => {
             gridTemplateColumns: '170px 1fr 170px',
           }}
         >
-          <div style={{ marginRight: 25, padding: 10 }}>
+          <div style={{ paddingRight: '24px' }}>
             <h5
               style={{
                 marginTop: 10,
                 marginBottom: 10,
                 fontWeight: 600,
-                lineHeight: 1.4,
               }}
             >
               Tools
@@ -1815,40 +1799,27 @@ const SeatDesigner = forwardRef((props, ref) => {
               </Button>
             </Space>
 
-            {/* <div className="text-center p-4">
-            <input
-              type="file"
-              className="form-control"
-              onChange={loadFromJson}
-            ></input>
-            load file
-          </div> */}
-
-            <div
-              className="offcanvas offcanvas-start"
-              tabIndex="-1"
-              id="offcanvasExample"
-              aria-labelledby="offcanvasExampleLabel"
+            {/* <Space
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: 5,
+                marginBottom: 10,
+              }}
             >
-              <div className="offcanvas-header">
-                <h5 className="offcanvas-title" id="offcanvasExampleLabel">
-                  Offcanvas
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close text-reset"
-                  data-bs-dismiss="offcanvas"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div className="offcanvas-body"></div>
-            </div>
+              <Button
+                style={{ width: 150, backgroundColor: '#f58634' }}
+                onClick={() => loadDesign(jsonData)}
+              >
+                Edit
+              </Button>
+            </Space> */}
           </div>
 
           <div ref={canvasDivRef} style={{ minHeight: '100vh' }}>
             <FabricJSCanvas className="sample-canvas" onReady={onReady} />
           </div>
-          <div style={{ height: '100vh', marginLeft: 25 }}>
+          <div style={{ height: '100vh', paddingLeft: '24px' }}>
             <h5
               style={{
                 fontWeight: 600,

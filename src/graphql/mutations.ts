@@ -229,6 +229,7 @@ export const UPDATE_EVENT_MUTATION = gql`
         id
         name
       }
+      venueData
       length
       description
       subtitles
@@ -298,6 +299,25 @@ export const UPDATE_MEMBERSHIP_TYPE_MUTATION = gql`
       name
       business {
         id
+      }
+    }
+  }
+`;
+
+export const CREATE_TICKETS_CHECKOUT = gql`
+  mutation CreateTickets($input: CreateTicketOrder!) {
+    createTickets(input: $input) {
+      id
+      name
+      date
+      venueData
+      venue {
+        id
+        hasSeats
+      }
+      eventTemplate {
+        id
+        name
       }
     }
   }

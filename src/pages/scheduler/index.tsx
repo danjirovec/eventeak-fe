@@ -38,8 +38,8 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
 }) => {
   const [form] = Form.useForm();
   const { create, edit } = useNavigation();
-  const { mutate: deleteMutate } = useDelete();
-  const { mutate: cloneMutate } = useCreate();
+  const { mutate: deleteMutate, isLoading: deleteLoading } = useDelete();
+  const { mutate: cloneMutate, isLoading: cloneLoading } = useCreate();
   const [open, setOpen] = useState(false);
   const [eventInfo, setEventInfo] = useState<EventInfoProps | undefined>(
     undefined,
@@ -160,7 +160,7 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
             okText="Yes"
             cancelText="No"
           >
-            <Button danger key="submit" type="default">
+            <Button loading={deleteLoading} danger key="submit" type="default">
               Delete
             </Button>
           </Popconfirm>,
@@ -192,7 +192,7 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
             okText="Duplicate"
             cancelText="Cancel"
           >
-            <Button key="submit" type="default">
+            <Button loading={cloneLoading} key="submit" type="default">
               Duplicate
             </Button>
           </Popconfirm>,

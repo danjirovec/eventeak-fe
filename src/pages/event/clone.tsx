@@ -32,6 +32,7 @@ import dayjs from 'dayjs';
 import { getBusiness } from 'util/get-business';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadClone } from 'components/upload/util';
+import { Text } from 'components';
 
 export const CloneEvent = () => {
   const [formData, setFormData] = useState<FormData | null>(new FormData());
@@ -60,9 +61,7 @@ export const CloneEvent = () => {
     submitOnEnter: true,
   });
 
-  const { selectProps, queryResult } = useSelect<
-    GetFieldsFromList<VenuesListQuery>
-  >({
+  const { selectProps, query } = useSelect<GetFieldsFromList<VenuesListQuery>>({
     resource: 'venues',
     optionLabel: 'name',
     optionValue: 'id',
@@ -88,7 +87,7 @@ export const CloneEvent = () => {
     ],
   });
 
-  const { selectProps: templateSelectProps, queryResult: templateQueryResult } =
+  const { selectProps: templateSelectProps, query: templateQueryResult } =
     useSelect<GetFieldsFromList<TemplatesListQuery>>({
       resource: 'event-templates',
       optionLabel: 'name',
@@ -120,7 +119,9 @@ export const CloneEvent = () => {
       ],
     });
 
-  const { data } = useList<GetFieldsFromList<EventPriceCategoryListQuery>>({
+  const { data, isLoading } = useList<
+    GetFieldsFromList<EventPriceCategoryListQuery>
+  >({
     resource: 'eventPriceCategories',
     meta: {
       gqlQuery: EVENT_PRICE_CATEGORY_QUERY,
@@ -144,6 +145,13 @@ export const CloneEvent = () => {
         order: 'desc',
       },
     ],
+    queryOptions: {
+      enabled: templateId
+        ? true
+        : formProps.initialValues?.eventTemplate.id
+          ? true
+          : false,
+    },
   });
 
   useEffect(() => {
@@ -257,10 +265,10 @@ export const CloneEvent = () => {
               >
                 <Select
                   allowClear={true}
-                  disabled={editDisabled}
+                  disabled
                   placeholder="Venue"
                   {...selectProps}
-                  options={queryResult.data?.data.map((venue) => ({
+                  options={query.data?.data.map((venue) => ({
                     value: venue.id,
                     label: venue.name,
                   }))}
@@ -363,93 +371,93 @@ export const CloneEvent = () => {
           <h4 style={{ fontWeight: 600, lineHeight: 1.4, fontSize: 20 }}>
             Price Categories
           </h4>
-          {!editDisabled ? (
+          {!editDisabled && !isLoading && !formLoading ? (
             data?.data.map((item, index) => (
               <React.Fragment key={index}>
                 <Space
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    alignItems: 'center',
-                    marginBottom: 24,
+                    display: 'flex',
+                    columnGap: 50,
+                    backgroundColor: '#f5f5f5',
+                    padding: 10,
+                    borderRadius: 5,
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <div style={{ width: '100%' }}>
-                    <p style={{ marginBottom: 8 }}>Name</p>
-                    <Input
-                      variant="filled"
-                      value={item.name}
-                      placeholder="Name"
-                    />
-                  </div>
-                  <div></div>
+                  <Space
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Text>Name</Text>
+                    <Space>
+                      <Text style={{ fontWeight: 600 }}>{item.name}</Text>
+                    </Space>
+                  </Space>
+                  <Space
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Text>Price</Text>
+                    <Space>
+                      <Text style={{ fontWeight: 600 }}>{item.price}</Text>
+                    </Space>
+                  </Space>
+                  <Space
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Text>Section</Text>
+                    <Space>
+                      <Text style={{ fontWeight: 600 }}>
+                        {item.section.name}
+                      </Text>
+                    </Space>
+                  </Space>
+                  <Space
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Text>Start Date</Text>
+                    <Space>
+                      <Text style={{ fontWeight: 600 }}>
+                        {item.startDate
+                          ? dayjs(item.startDate).format('D. M. YYYY')
+                          : null}
+                      </Text>
+                    </Space>
+                  </Space>
+                  <Space
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <Text>End Date</Text>
+                    <Space>
+                      <Text style={{ fontWeight: 600 }}>
+                        {item.endDate
+                          ? dayjs(item.endDate).format('D. M. YYYY')
+                          : null}
+                      </Text>
+                    </Space>
+                  </Space>
                 </Space>
-                <Space
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    alignItems: 'center',
-                    marginBottom: 24,
-                  }}
-                >
-                  <div style={{ width: '100%' }}>
-                    <p style={{ marginBottom: 8 }}>Price</p>
-                    <Input
-                      variant="filled"
-                      value={item.price}
-                      placeholder="Price"
-                    />
-                  </div>
-                  <div>
-                    <p style={{ marginBottom: 8 }}>Section</p>
-                    <Input
-                      variant="filled"
-                      value={item.section?.name}
-                      placeholder="Section"
-                    />
-                  </div>
-                </Space>
-                <Space
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    alignItems: 'center',
-                    marginBottom: 24,
-                  }}
-                >
-                  <div style={{ width: '100%' }}>
-                    <p style={{ marginBottom: 8 }}>Start Date</p>
-                    <Input
-                      variant="filled"
-                      readOnly
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
-                      }}
-                      value={
-                        item.startDate
-                          ? dayjs(item.startDate).format()
-                          : undefined
-                      }
-                    />
-                  </div>
-                  <div>
-                    <p style={{ marginBottom: 8 }}>End Date</p>
-                    <Input
-                      variant="filled"
-                      readOnly
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
-                      }}
-                      value={
-                        item.endDate ? dayjs(item.endDate).format() : undefined
-                      }
-                    />
-                  </div>
-                </Space>
+
                 <Divider
-                  style={{ marginTop: 1 }}
+                  style={{ marginTop: 5 }}
                   children={<EllipsisOutlined />}
                 />
               </React.Fragment>

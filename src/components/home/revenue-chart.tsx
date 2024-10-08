@@ -10,11 +10,18 @@ import { Card } from 'antd';
 import { Text } from '../text';
 import { ORDERS_QUERY } from 'graphql/queries';
 import { OrdersListQuery } from 'graphql/types';
+import { getBusiness } from 'util/get-business';
 
 const RevenueChart = () => {
   const { data } = useList<GetFieldsFromList<OrdersListQuery>>({
     resource: 'orders',
-    filters: [],
+    filters: [
+      {
+        field: 'businessId',
+        operator: 'eq',
+        value: getBusiness().id,
+      },
+    ],
     meta: {
       gqlQuery: ORDERS_QUERY,
     },
@@ -26,10 +33,9 @@ const RevenueChart = () => {
 
   const config: AreaConfig = {
     isStack: false,
-    data: [],
-    xField: 'timeText',
-    yField: 'value',
-    seriesField: 'state',
+    data: dealData ? dealData : [],
+    xField: 'created',
+    yField: 'total',
     animation: true,
     startOnZero: false,
     smooth: true,
@@ -40,25 +46,25 @@ const RevenueChart = () => {
       tickCount: 4,
       label: {
         formatter: (v) => {
-          return `$${Number(v) / 1000}k`;
+          return `CZK ${Number(v) / 1000}k`;
         },
       },
     },
     tooltip: {
       formatter: (data) => {
         return {
-          name: data.state,
-          value: `$${Number(data.value) / 1000}k`,
+          name: data.total,
+          value: `CZK ${Number(data.total) / 1000}k`,
         };
       },
     },
-    areaStyle: (datum) => {
+    areaStyle: (data) => {
       const won = 'l(270) 0:#ffffff 0.5:#b7eb8f 1:#52c41a';
       const lost = 'l(270) 0:#ffffff 0.5:#f3b7c2 1:#ff4d4f';
-      return { fill: datum.state === 'Won' ? won : lost };
+      return { fill: won };
     },
-    color: (datum) => {
-      return datum.state === 'Won' ? '#52C41A' : '#F5222D';
+    color: (data) => {
+      return '#52C41A';
     },
   };
 

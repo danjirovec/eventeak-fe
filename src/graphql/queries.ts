@@ -12,6 +12,7 @@ export const EVENTS_QUERY = gql`
         id
         category
         created
+        updated
         name
         length
         description
@@ -31,6 +32,86 @@ export const EVENTS_QUERY = gql`
         }
       }
       totalCount
+    }
+  }
+`;
+
+// Query to get event checkout data
+export const EVENT_CHECKOUT_QUERY = gql`
+  query EventCheckoutList($meta: String!) {
+    getEventCheckout(meta: $meta) {
+      tickets {
+        id
+        price
+        user {
+          id
+          firstName
+          lastName
+          email
+        }
+        event {
+          id
+          name
+          eventTemplate {
+            id
+          }
+          venueData
+          venue {
+            id
+            name
+          }
+        }
+        seat {
+          id
+          row
+          seat
+        }
+        section {
+          id
+          name
+        }
+        discount {
+          id
+          name
+        }
+      }
+      eventPriceCategories {
+        nodes {
+          id
+          name
+          startDate
+          endDate
+          section {
+            id
+            name
+          }
+          price
+        }
+        counts
+      }
+      events {
+        id
+        name
+        venueData
+        venue {
+          id
+          name
+          hasSeats
+        }
+        category
+        date
+      }
+      users {
+        id
+        firstName
+        lastName
+        email
+      }
+      discounts {
+        id
+        name
+        percentage
+      }
     }
   }
 `;
@@ -216,6 +297,7 @@ export const ORDERS_QUERY = gql`
         business {
           id
         }
+        created
       }
       totalCount
     }

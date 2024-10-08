@@ -218,6 +218,7 @@ export const dataProvider: DataProvider = {
     return {
       data: response[operation].nodes,
       total: response[operation].totalCount,
+      response: response[operation],
     };
   },
   create: async ({ resource, variables, meta }) => {
@@ -241,6 +242,7 @@ export const dataProvider: DataProvider = {
 
       return {
         data: response[operation],
+        response: response,
       };
     }
 

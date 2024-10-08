@@ -15,7 +15,6 @@ function LiveClock() {
   return (
     <div style={{ display: 'flex', marginRight: 50, alignItems: 'center' }}>
       <ClockCircleOutlined style={{ marginRight: 10 }} />
-      <p style={{ marginBottom: 0, marginRight: 5 }}>Time:</p>
       <p style={{ marginBottom: 0, width: 30 }}>
         <strong>
           {currentTime.toLocaleTimeString([], {

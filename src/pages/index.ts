@@ -40,3 +40,5 @@ export { BusinessList } from './business/list';
 export { CreateBusiness } from './business/create';
 export { CloneBusiness } from './business/clone';
 export { EditBusiness } from './business/edit';
+export { Checkout } from './checkout/index';
+export { Map } from './map/index';

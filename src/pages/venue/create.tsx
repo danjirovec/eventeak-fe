@@ -78,6 +78,9 @@ export const CreateVenue = () => {
             layout="vertical"
             onFinish={handleOnFinish}
             requiredMark={requiredOptionalMark}
+            style={{
+              gridTemplateColumns: '1fr 1fr',
+            }}
           >
             <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
               <Form.Item
@@ -149,7 +152,7 @@ export const CreateVenue = () => {
                 >
                   Designer
                 </h4>
-                <Designer ref={actionRef}></Designer>
+                <Designer ref={actionRef} />
               </React.Fragment>
             ) : (
               <React.Fragment>

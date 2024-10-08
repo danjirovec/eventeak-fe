@@ -1,11 +1,16 @@
 import { Card, Skeleton } from 'antd';
 
-const SelectSkeleton = () => {
+const SelectSkeleton = ({ width }: { width: number | string }) => {
   return (
     <Card
-      style={{ width: 300, display: 'flex', alignItems: 'center' }}
+      style={{ width: width, display: 'flex', alignItems: 'center' }}
       styles={{
-        body: { display: 'flex', padding: 8, width: 300, alignItems: 'center' },
+        body: {
+          display: 'flex',
+          padding: 8,
+          width: width,
+          alignItems: 'center',
+        },
       }}
     >
       <Skeleton.Button
