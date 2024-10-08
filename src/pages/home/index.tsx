@@ -125,11 +125,11 @@ export const Home = () => {
         <Row
           gutter={[32, 32]}
           justify="start"
-          style={{ marginBottom: 32, marginTop: 16 }}
+          style={{ marginBottom: 16 }}
         >
           <Col xs={24} sm={24} xl={16}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <h2 style={{ margin: 0 }}>Manage business:</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+              <h2 style={{ margin: 0 }}>Business</h2>
               {!isDashLoading ? (
                 <Select
                   onChange={handleBusinessChange}
@@ -168,8 +168,11 @@ export const Home = () => {
       </div>
       <div>
         <h2>Totals</h2>
-        <Row gutter={[32, 32]} style={{ marginTop: 16 }}>
-          <Col xs={24} sm={24} xl={8} style={{ height: 115 }}>
+        <Row
+          gutter={[32, 32]}
+          style={{ marginBottom: 16 }}
+        >
+          <Col xs={24} sm={24} xl={8}>
             <DashboardTotalCountCard
               resource="customers"
               isLoading={isDashLoading}
@@ -178,7 +181,7 @@ export const Home = () => {
               }
             />
           </Col>
-          <Col xs={24} sm={24} xl={8} style={{ height: 115 }}>
+          <Col xs={24} sm={24} xl={8}>
             <DashboardTotalCountCard
               resource="memberships"
               isLoading={isDashLoading}
@@ -187,7 +190,7 @@ export const Home = () => {
               }
             />
           </Col>
-          <Col xs={24} sm={24} xl={8} style={{ height: 115 }}>
+          <Col xs={24} sm={24} xl={8}>
             <DashboardTotalCountCard
               resource="events"
               isLoading={isDashLoading}
@@ -198,19 +201,14 @@ export const Home = () => {
           </Col>
         </Row>
       </div>
-      <Row
-        gutter={[32, 32]}
-        style={{
-          marginTop: 16,
-        }}
-      >
+      <Row gutter={[32, 32]}>
         <Col
           xs={24}
           sm={24}
           xl={8}
           style={{
             height: '460px',
-            marginBottom: 50,
+            marginBottom: 32,
           }}
         >
           <h2>Upcoming events</h2>

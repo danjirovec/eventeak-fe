@@ -59,7 +59,7 @@ const DashboardTotalCountCard = ({ resource, isLoading, counts }: Props) => {
         <TotalSkeleton />
       ) : (
         <Card
-          style={{ height: 96, padding: 0 }}
+          style={{ height: 90, padding: 0 }}
           styles={{ body: { padding: '8px 8px 8px 12px' } }}
           size="small"
         >

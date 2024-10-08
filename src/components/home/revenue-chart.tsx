@@ -59,12 +59,12 @@ const RevenueChart = () => {
       },
     },
     areaStyle: (data) => {
-      const won = 'l(270) 0:#ffffff 0.5:#b7eb8f 1:#52c41a';
-      const lost = 'l(270) 0:#ffffff 0.5:#f3b7c2 1:#ff4d4f';
+      const won = 'l(270) 0:#007965 0.5:#007965 1:#007965';
+      // const lost = 'l(270) 0:#ffffff 0.5:#f3b7c2 1:#ff4d4f';
       return { fill: won };
     },
     color: (data) => {
-      return '#52C41A';
+      return '#007965';
     },
   };
 

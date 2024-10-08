@@ -79,7 +79,7 @@ export const Checkout = () => {
     meta: {
       meta: {
         businessId: getBusiness().id,
-        eventId: eventId || event?.id,
+        eventId: event?.id,
       },
       gqlQuery: EVENT_CHECKOUT_QUERY,
     },
@@ -286,7 +286,7 @@ export const Checkout = () => {
               <Flex justify="center" align="center" style={{ height: '100%' }}>
                 <Spin />
               </Flex>
-            ) : !eventId && !event ? (
+            ) : !event ? (
               <Flex justify="center" align="center" style={{ height: '100%' }}>
                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </Flex>
@@ -386,7 +386,7 @@ export const Checkout = () => {
                         .toLowerCase()
                         .includes(input.toLowerCase())
                     }
-                    defaultValue={event?.id || eventId}
+                    defaultValue={event?.id}
                     options={data?.response.events?.map((event: Event) => ({
                       label: `${event.name} (${dayjs(event.date).format('DD. MM. - HH:mm')})`,
                       value: event.id,
