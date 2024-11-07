@@ -9,15 +9,9 @@ import {
   useSelect,
   useTable,
 } from '@refinedev/antd';
-import {
-  getDefaultFilter,
-  useGo,
-  useNavigation,
-  useUpdate,
-} from '@refinedev/core';
+import { getDefaultFilter, useNavigation, useUpdate } from '@refinedev/core';
 import {
   Button,
-  Checkbox,
   DatePicker,
   Input,
   InputNumber,
@@ -45,6 +39,7 @@ import {
 } from '/graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { UPDATE_TICKET_MUTATION } from 'graphql/mutations';
+import { FilterDropdownProps } from '@refinedev/antd';
 
 export const TicketList = ({ children }: React.PropsWithChildren) => {
   const business = useGlobalStore((state) => state.business);
@@ -240,7 +235,7 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props;
+              } = props as FilterDropdownProps;
               return (
                 <FilterDropdown
                   {...rest}
@@ -605,7 +600,7 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props;
+              } = props as FilterDropdownProps;
               return (
                 <FilterDropdown
                   {...rest}

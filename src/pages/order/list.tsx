@@ -4,6 +4,7 @@ import {
   DeleteButton,
   EditButton,
   FilterDropdown,
+  FilterDropdownProps,
   getDefaultSortOrder,
   List,
   useSelect,
@@ -118,7 +119,7 @@ export const OrderList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props;
+              } = props as FilterDropdownProps;
               return (
                 <FilterDropdown
                   {...rest}
