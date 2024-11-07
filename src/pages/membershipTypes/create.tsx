@@ -2,42 +2,51 @@ import React from 'react';
 import { Button, Col, Form, Input, Row } from 'antd';
 import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
-import { CREATE_BENEFIT_MUTATION } from 'graphql/mutations';
+import { CREATE_MEMBERSHIP_TYPE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import { useGlobalStore } from 'providers/context/store';
 
-export const CreateTicket = () => {
-  const user = useGlobalStore((state) => state.user);
+export const CreateMembershipType = () => {
+  const business = useGlobalStore((state) => state.business);
   const go = useGo();
   const goToListPage = () => {
     go({
-      to: { resource: 'tickets', action: 'list' },
+      to: { resource: 'membership-types', action: 'list' },
       options: { keepQuery: true },
       type: 'replace',
     });
   };
-  const { TextArea } = Input;
 
   const { formProps, saveButtonProps, onFinish } = useForm({
     action: 'create',
-    resource: 'tickets',
-    redirect: false,
+    resource: 'membership-types',
+    redirect: 'list',
     mutationMode: 'pessimistic',
-    onMutationSuccess: goToListPage,
+    successNotification() {
+      return {
+        description: 'Success',
+        message: 'Successfully created a membership type',
+        type: 'success',
+      };
+    },
     meta: {
-      gqlMutation: CREATE_BENEFIT_MUTATION,
+      gqlMutation: CREATE_MEMBERSHIP_TYPE_MUTATION,
     },
     submitOnEnter: true,
   });
 
   const handleOnFinish = (values: any) => {
-    onFinish({ ...values, userId: user?.id });
+    onFinish({
+      ...values,
+      businessId: business?.id,
+    });
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
-      <Col xs={24} xl={10}>
+      <Col xs={24} xl={8}>
         <Create
+          title="Create Membership Type"
           saveButtonProps={saveButtonProps}
           goBack={<Button>←</Button>}
           breadcrumb={false}
@@ -49,15 +58,22 @@ export const CreateTicket = () => {
             requiredMark={requiredOptionalMark}
             onFinish={handleOnFinish}
           >
-            <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-              <Input placeholder="Benefit Name" />
-            </Form.Item>
             <Form.Item
-              label="Description"
-              name="description"
-              rules={[{ required: true }]}
+              label="Name"
+              name="name"
+              rules={[{ required: true, message: '' }]}
             >
-              <TextArea placeholder="Description"></TextArea>
+              <Input
+                placeholder="Name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea placeholder="Description" />
             </Form.Item>
           </Form>
         </Create>

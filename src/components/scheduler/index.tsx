@@ -5,7 +5,7 @@ import { Button, Card, Grid, Radio } from 'antd';
 
 import { Text } from '../text';
 import { GetListResponse } from '@refinedev/core';
-import { Business, Event, EventTemplate, Venue } from 'graphql/schema.types';
+import { Business, Event, Template, Venue } from 'graphql/schema.types';
 
 import styles from './index.module.css';
 import { getEventColor } from 'util/event-color';
@@ -24,21 +24,22 @@ type View =
 type CalendarProps = {
   data:
     | GetListResponse<
-        Pick<
-          Event,
-          | 'id'
-          | 'category'
-          | 'created'
-          | 'name'
-          | 'length'
-          | 'description'
-          | 'language'
-          | 'subtitles'
-          | 'date'
-        > & {
-          eventTemplate: Pick<EventTemplate, 'id'>;
+        Pick<Event, 'id' | 'created' | 'name' | 'date' | 'seatMap'> & {
+          template: Pick<
+            Template,
+            | 'id'
+            | 'category'
+            | 'name'
+            | 'length'
+            | 'type'
+            | 'description'
+            | 'language'
+            | 'posterUrl'
+            | 'subtitles'
+          > & {
+            venue: Pick<Venue, 'id' | 'name' | 'hasSeats'>;
+          };
           business: Pick<Business, 'id'>;
-          venue: Pick<Venue, 'id' | 'name'>;
         }
       >
     | undefined;
@@ -74,24 +75,24 @@ export const Calendar: React.FC<CalendarProps> = ({ data, onClickEvent }) => {
     return newDatetimeString;
   };
 
-  const events = (data?.data ?? []).map(
-    ({ id, name, date, category, length }) => ({
-      id: id,
-      title: name,
-      start: date,
-      end: addMinutesToDatetime(date, length),
-      extendedProps: { category: category },
-      backgroundColor: isDateTimeInPast(date)
+  const events = (data?.data ?? []).map((item) => {
+    return {
+      id: item.id,
+      title: item.name,
+      start: item.date,
+      end: addMinutesToDatetime(item.date, item.template.length ?? 30),
+      extendedProps: { category: item.template.category },
+      backgroundColor: isDateTimeInPast(item.date)
         ? 'lightgrey'
-        : getEventColor(category).background,
-      textColor: isDateTimeInPast(date)
+        : getEventColor(item.template.category).background,
+      textColor: isDateTimeInPast(item.date)
         ? 'black'
-        : getEventColor(category).text,
-      borderColor: isDateTimeInPast(date)
+        : getEventColor(item.template.category).text,
+      borderColor: isDateTimeInPast(item.date)
         ? 'lightgrey'
-        : getEventColor(category).background,
-    }),
-  );
+        : getEventColor(item.template.category).background,
+    };
+  });
 
   return (
     <Card>

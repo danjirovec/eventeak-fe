@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   UpdatePasswordPageProps,
   UpdatePasswordFormTypes,
   useActiveAuthProvider,
   useUpdatePassword,
+  useRouterContext,
+  useRouterType,
+  useLink,
 } from '@refinedev/core';
-import { ThemedTitleV2 } from '@refinedev/antd';
 import {
   layoutStyles,
   containerStyles,
@@ -27,9 +29,9 @@ import {
   FormProps,
   theme,
 } from 'antd';
-import { SVGLogo } from 'components/layout/svg-logo';
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { requiredOptionalMark } from 'components/requiredMark';
+import logo from 'assets/eventeak.png';
 
 type UpdatePasswordProps = UpdatePasswordPageProps<
   LayoutProps,
@@ -47,11 +49,18 @@ export const UpdatePasswordPage: React.FC<UpdatePasswordProps> = ({
   const { token } = theme.useToken();
   const [form] = Form.useForm<UpdatePasswordFormTypes>();
   const authProvider = useActiveAuthProvider();
-  useDocumentTitle('Update Password - Applausio');
+  const routerType = useRouterType();
+  const Link = useLink();
+  const { Link: LegacyLink } = useRouterContext();
+  useDocumentTitle('Update Password - Eventeak');
   const { mutate: updatePassword, isLoading } =
     useUpdatePassword<UpdatePasswordFormTypes>({
       v3LegacyAuthProviderCompatible: Boolean(authProvider?.isLegacy),
     });
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  const ActiveLink = routerType === 'legacy' ? LegacyLink : Link;
 
   const PageTitle =
     title === false ? null : (
@@ -64,7 +73,9 @@ export const UpdatePasswordPage: React.FC<UpdatePasswordProps> = ({
         }}
       >
         {title ?? (
-          <ThemedTitleV2 collapsed={false} text="Applausio" icon={SVGLogo} />
+          <ActiveLink to="/">
+            <img src={logo} />
+          </ActiveLink>
         )}
       </div>
     );
@@ -101,7 +112,6 @@ export const UpdatePasswordPage: React.FC<UpdatePasswordProps> = ({
         <Form.Item
           name="password"
           label={'New Password'}
-          hasFeedback
           rules={[
             { required: true, message: '' },
             {
@@ -124,7 +134,14 @@ export const UpdatePasswordPage: React.FC<UpdatePasswordProps> = ({
           ]}
           style={{ marginBottom: '12px' }}
         >
-          <Input type="password" placeholder="●●●●●●●●" />
+          <Input.Password
+            visibilityToggle={{
+              visible: passwordVisible,
+              onVisibleChange: setPasswordVisible,
+            }}
+            type="password"
+            placeholder="Password"
+          />
         </Form.Item>
         <Form.Item
           name="confirmPassword"
@@ -146,7 +163,14 @@ export const UpdatePasswordPage: React.FC<UpdatePasswordProps> = ({
             }),
           ]}
         >
-          <Input type="password" placeholder="●●●●●●●●" />
+          <Input.Password
+            visibilityToggle={{
+              visible: confirmPasswordVisible,
+              onVisibleChange: setConfirmPasswordVisible,
+            }}
+            type="password"
+            placeholder="Confirm Password"
+          />
         </Form.Item>
         <Form.Item
           style={{

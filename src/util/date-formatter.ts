@@ -1,6 +1,6 @@
 export const formatDate = (time: boolean, isoDate: string | null) => {
   if (isoDate === null || isoDate === '-') {
-    return '-';
+    return null;
   }
   const date = new Date(isoDate);
 

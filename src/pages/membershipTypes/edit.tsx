@@ -1,18 +1,34 @@
 import React from 'react';
 import { Edit, ListButton, useForm } from '@refinedev/antd';
-import { Button, Col, Form, Input, InputNumber, Row } from 'antd';
-import { UPDATE_DISCOUNT_MUTATION } from 'graphql/mutations';
+import { Button, Col, Form, Input, Row } from 'antd';
+import { UPDATE_MEMBERSHIP_TYPE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
+import { useGo } from '@refinedev/core';
 
-export const EditDiscount = () => {
+export const EditMembershipType = () => {
+  const go = useGo();
+  const goToListPage = () => {
+    go({
+      to: { resource: 'membership-types', action: 'list' },
+      options: { keepQuery: true },
+      type: 'replace',
+    });
+  };
   const { saveButtonProps, formProps, formLoading } = useForm({
+    action: 'edit',
     redirect: 'list',
     mutationMode: 'pessimistic',
-    resource: 'discounts',
-    action: 'edit',
     meta: {
-      gqlMutation: UPDATE_DISCOUNT_MUTATION,
+      gqlMutation: UPDATE_MEMBERSHIP_TYPE_MUTATION,
     },
+    successNotification() {
+      return {
+        description: 'Success',
+        message: 'Successfully updated a membership type',
+        type: 'success',
+      };
+    },
+    submitOnEnter: true,
   });
 
   return (
@@ -20,7 +36,7 @@ export const EditDiscount = () => {
       <Row justify="center" gutter={[32, 32]}>
         <Col xs={24} xl={8}>
           <Edit
-            canDelete
+            title="Edit Membership Type"
             goBack={<Button>←</Button>}
             isLoading={formLoading}
             saveButtonProps={saveButtonProps}
@@ -28,32 +44,18 @@ export const EditDiscount = () => {
             headerButtons={({ listButtonProps }) => (
               <>{listButtonProps && <ListButton {...listButtonProps} />}</>
             )}
+            headerProps={{ onBack: goToListPage }}
           >
             <Form
               {...formProps}
               layout="vertical"
               requiredMark={requiredOptionalMark}
             >
-              <Form.Item
-                label="Name"
-                name="name"
-                rules={[{ required: true, message: '' }]}
-              >
+              <Form.Item label="Name" name="name" rules={[{ required: true }]}>
                 <Input placeholder="Name" />
               </Form.Item>
-              <Form.Item
-                style={{ width: '100%' }}
-                label="Percentage"
-                name="percentage"
-                rules={[{ required: true, message: '' }]}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={1}
-                  max={100}
-                  placeholder="Percentage"
-                  addonAfter="%"
-                />
+              <Form.Item label="Description" name="description">
+                <Input.TextArea placeholder="Description" />
               </Form.Item>
             </Form>
           </Edit>

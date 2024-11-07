@@ -1,28 +1,29 @@
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import {
-  CloneButton,
   CreateButton,
   DeleteButton,
   EditButton,
   FilterDropdown,
+  getDefaultSortOrder,
   List,
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo } from '@refinedev/core';
-import { Input, Space, Table } from 'antd';
+import { Avatar, Input, Select, Space, Table } from 'antd';
 import { CUSTOM_BUSINESSES_QUERY } from 'graphql/queries';
-import { CopyOutlined, FilterFilled } from '@ant-design/icons';
+import { FilterFilled, PictureOutlined } from '@ant-design/icons';
 import { Text } from 'components/text';
 import { Business } from 'graphql/schema.types';
-import LogoPreviewSkeleton from 'components/skeleton/logo-preview';
-import { getAuth } from 'util/get-auth';
 import { BUCKET_URL } from 'config/config';
+import { useGlobalStore } from 'providers/context/store';
+import { currencyOptions } from 'enum/enum';
 
 export const BusinessList = ({ children }: React.PropsWithChildren) => {
-  useDocumentTitle('Businesses - Applausio');
+  useDocumentTitle('Businesses - Eventeak');
+  const user = useGlobalStore((state) => state.user);
   const go = useGo();
 
-  const { tableProps, filters } = useTable({
+  const { tableProps, filters, sorters } = useTable({
     resource: 'getUserBusinesses',
     onSearch: (values: any) => {
       return [
@@ -56,7 +57,7 @@ export const BusinessList = ({ children }: React.PropsWithChildren) => {
     },
     meta: {
       gqlQuery: CUSTOM_BUSINESSES_QUERY,
-      user: getAuth().userId,
+      user: user?.id,
     },
   });
 
@@ -94,15 +95,16 @@ export const BusinessList = ({ children }: React.PropsWithChildren) => {
                   alignItems: 'center',
                 }}
               >
-                {record.logoUrl ? (
-                  <img
-                    height={50}
-                    width={50}
-                    src={`${BUCKET_URL}businesses/${record.logoUrl}`}
-                  />
-                ) : (
-                  <LogoPreviewSkeleton />
-                )}
+                <Avatar
+                  size="large"
+                  icon={<PictureOutlined />}
+                  shape="circle"
+                  src={
+                    record.logoUrl
+                      ? `${BUCKET_URL}businesses/${record.logoUrl}`
+                      : null
+                  }
+                />
               </Space>
             )}
           />
@@ -113,9 +115,11 @@ export const BusinessList = ({ children }: React.PropsWithChildren) => {
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
-                <Input placeholder="Name" />
+                <Input style={{ width: 250 }} placeholder="Name" />
               </FilterDropdown>
             )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('name', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.name}</Text>
@@ -123,28 +127,48 @@ export const BusinessList = ({ children }: React.PropsWithChildren) => {
             )}
           />
           <Table.Column<Business>
-            dataIndex="apiKey"
-            title="API Key"
+            dataIndex="currency"
+            title="Currency"
+            defaultFilteredValue={getDefaultFilter('currency', filters)}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => (
+              <FilterDropdown {...props}>
+                <Select
+                  style={{ width: 250 }}
+                  mode="multiple"
+                  placeholder="Select currency"
+                  options={currencyOptions}
+                />
+              </FilterDropdown>
+            )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('currency', sorters)}
             render={(value, record) => (
               <Space>
-                <Text style={{ whiteSpace: 'nowrap' }}>{record.apiKey}</Text>
+                <Text style={{ whiteSpace: 'nowrap' }}>{record.currency}</Text>
               </Space>
             )}
           />
           <Table.Column<Business>
+            width={200}
             dataIndex="id"
             title="Actions"
             fixed="right"
             render={(value) => (
               <Space>
                 <EditButton hideText size="small" recordItemId={value} />
-                <CloneButton
+                <DeleteButton
+                  errorNotification={(data: any) => {
+                    return {
+                      description: 'Error',
+                      message: `${data.message}`,
+                      type: 'error',
+                    };
+                  }}
                   hideText
                   size="small"
                   recordItemId={value}
-                  icon={<CopyOutlined />}
                 />
-                <DeleteButton hideText size="small" recordItemId={value} />
               </Space>
             )}
           />

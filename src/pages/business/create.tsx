@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Button, Col, Form, Input, Row } from 'antd';
+import { Button, Col, Form, Input, Row, Select } from 'antd';
 import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_BUSINESS_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadCreate } from 'components/upload/util';
-import { getAuth } from 'util/get-auth';
+import { useGlobalStore } from 'providers/context/store';
+import { currencyOptions } from 'enum/enum';
 
 export const CreateBusiness = () => {
+  const user = useGlobalStore((state) => state.user);
   const [formData, setFormData] = useState<FormData | null>(null);
   const go = useGo();
   const goToListPage = () => {
@@ -40,14 +42,14 @@ export const CreateBusiness = () => {
     const logoUrl = await uploadCreate('businesses', formData);
     onFinish({
       ...values,
-      userId: getAuth().userId,
+      userId: user?.id,
       logoUrl: logoUrl,
     });
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
-      <Col xs={24} xl={10}>
+      <Col xs={24} xl={8}>
         <Create
           saveButtonProps={{
             ...saveButtonProps,
@@ -60,13 +62,27 @@ export const CreateBusiness = () => {
         >
           <Form
             {...formProps}
-            variant="filled"
             layout="vertical"
             requiredMark={requiredOptionalMark}
             onFinish={handleOnFinish}
           >
-            <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+            <Form.Item
+              label="Name"
+              name="name"
+              rules={[{ required: true, message: '' }]}
+            >
               <Input placeholder="Name" />
+            </Form.Item>
+            <Form.Item
+              label="Currency"
+              name="currency"
+              rules={[{ required: true, message: '' }]}
+            >
+              <Select
+                allowClear
+                placeholder="Currency"
+                options={currencyOptions}
+              />
             </Form.Item>
             <Form.Item label="Logo" name="logoUrl">
               <SupaUpload onUpload={handleUpload} />

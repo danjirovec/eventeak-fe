@@ -6,9 +6,6 @@ import {
   Input,
   Space,
   Switch,
-  Upload,
-  UploadProps,
-  message,
   Radio,
   InputNumber,
   Col,
@@ -17,30 +14,12 @@ import {
 import { useForm, Create } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_BENEFIT_MUTATION } from 'graphql/mutations';
-import { UploadOutlined } from '@ant-design/icons';
 import { Text } from 'components/text';
 import { requiredOptionalMark } from 'components/requiredMark';
-import { getAuth } from 'util/get-auth';
-
-const props: UploadProps = {
-  name: 'file',
-  action: '',
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  onChange(info) {
-    if (info.file.status !== 'uploading') {
-      console.log(info.file, info.fileList);
-    }
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} file upload failed.`);
-    }
-  },
-};
+import { useGlobalStore } from 'providers/context/store';
 
 export const CreateCustomer = () => {
+  const user = useGlobalStore((state) => state.user);
   const [disabled, setDisabled] = useState(true);
   const go = useGo();
   const goToListPage = () => {
@@ -77,7 +56,7 @@ export const CreateCustomer = () => {
       birthDate: values.birthDate,
       placeOfResidence: values.placeOfResidence,
       avatar_url: values.avatar_url,
-      userId: getAuth().userId,
+      userId: user?.id,
       verifyToken: 'random',
     };
 
@@ -220,11 +199,7 @@ export const CreateCustomer = () => {
               name="avatar_url"
               label="Upload Profile Picture"
               hasFeedback
-            >
-              <Upload {...props}>
-                <Button icon={<UploadOutlined />}>Select File</Button>
-              </Upload>
-            </Form.Item>
+            ></Form.Item>
             <Text style={{ fontWeight: '600', lineHeight: 2.5 }} size="md">
               Membership
             </Text>

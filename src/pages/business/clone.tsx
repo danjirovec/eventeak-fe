@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Button, Col, Form, Input, Row } from 'antd';
+import { Button, Col, Form, Input, Row, Select } from 'antd';
 import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_BUSINESS_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadClone } from 'components/upload/util';
-import { getAuth } from 'util/get-auth';
+import { useGlobalStore } from 'providers/context/store';
+import { currencyOptions } from 'enum/enum';
 
 export const CloneBusiness = () => {
+  const user = useGlobalStore((state) => state.user);
   const [formData, setFormData] = useState<FormData | null>(new FormData());
   const go = useGo();
   const goToListPage = () => {
@@ -42,13 +44,13 @@ export const CloneBusiness = () => {
     onFinish({
       ...values,
       logoUrl: logoUrl,
-      userId: getAuth().userId,
+      userId: user?.id,
     });
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
-      <Col xs={24} xl={10}>
+      <Col xs={24} xl={8}>
         <Create
           title="Clone Business"
           saveButtonProps={{
@@ -62,13 +64,23 @@ export const CloneBusiness = () => {
         >
           <Form
             {...formProps}
-            variant="filled"
             layout="vertical"
             requiredMark={requiredOptionalMark}
             onFinish={handleOnFinish}
           >
             <Form.Item label="Name" name="name" rules={[{ required: true }]}>
               <Input placeholder="Name" />
+            </Form.Item>
+            <Form.Item
+              label="Currency"
+              name="currency"
+              rules={[{ required: true, message: '' }]}
+            >
+              <Select
+                allowClear
+                placeholder="Currency"
+                options={currencyOptions}
+              />
             </Form.Item>
             <Form.Item label="Logo" name="logoUrl">
               <SupaUpload

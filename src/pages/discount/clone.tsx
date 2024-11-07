@@ -4,9 +4,10 @@ import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_DISCOUNT_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
-import { getBusiness } from 'util/get-business';
+import { useGlobalStore } from 'providers/context/store';
 
 export const CloneDiscount = () => {
+  const business = useGlobalStore((state) => state.business);
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -16,12 +17,11 @@ export const CloneDiscount = () => {
     });
   };
 
-  const { formProps, saveButtonProps, onFinish } = useForm({
+  const { formProps, formLoading, saveButtonProps, onFinish } = useForm({
     action: 'clone',
     resource: 'discounts',
     redirect: 'list',
     mutationMode: 'pessimistic',
-    onMutationSuccess: goToListPage,
     meta: {
       gqlMutation: CREATE_DISCOUNT_MUTATION,
     },
@@ -31,14 +31,16 @@ export const CloneDiscount = () => {
   const handleOnFinish = (values: any) => {
     onFinish({
       ...values,
-      businessId: getBusiness().id,
+      businessId: business?.id,
     });
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
-      <Col xs={24} xl={10}>
+      <Col xs={24} xl={8}>
         <Create
+          title="Clone Discount"
+          isLoading={formLoading}
           saveButtonProps={saveButtonProps}
           goBack={<Button>←</Button>}
           breadcrumb={false}
@@ -58,11 +60,13 @@ export const CloneDiscount = () => {
               <Input placeholder="Name" />
             </Form.Item>
             <Form.Item
+              style={{ width: '100%' }}
               label="Percentage"
               name="percentage"
               rules={[{ required: true, message: '' }]}
             >
               <InputNumber
+                style={{ width: '100%' }}
                 min={1}
                 max={100}
                 placeholder="Percentage"

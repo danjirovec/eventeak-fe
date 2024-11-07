@@ -1,29 +1,62 @@
 import React from 'react';
-import { Edit, useForm } from '@refinedev/antd';
-import { Button, Col, DatePicker, Form, Input, InputNumber, Row } from 'antd';
+import { Edit, ListButton, useForm, useSelect } from '@refinedev/antd';
+import {
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+} from 'antd';
 import { UPDATE_BENEFIT_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import dayjs from 'dayjs';
-import { getBusiness } from 'util/get-business';
-import { useGo } from '@refinedev/core';
+import { MembershipTypeListQuery } from '/graphql/types';
+import { GetFieldsFromList } from '@refinedev/nestjs-query';
+import { MEMBERSHIP_TYPE_QUERY } from 'graphql/queries';
+import { useGlobalStore } from 'providers/context/store';
 
 export const EditBenefit = () => {
-  const go = useGo();
-  const goToListPage = () => {
-    go({
-      to: { resource: 'benefits', action: 'list' },
-      options: { keepQuery: true },
-      type: 'replace',
-    });
-  };
+  const business = useGlobalStore((state) => state.business);
   const { saveButtonProps, formProps, formLoading, onFinish } = useForm({
-    redirect: false,
+    resource: 'benefits',
+    action: 'edit',
+    redirect: 'list',
+    mutationMode: 'pessimistic',
     meta: {
       gqlMutation: UPDATE_BENEFIT_MUTATION,
     },
-    onMutationSuccess: goToListPage,
   });
   const { TextArea } = Input;
+
+  const { selectProps: membershipTypes, query: membershipTypesQuery } =
+    useSelect<GetFieldsFromList<MembershipTypeListQuery>>({
+      resource: 'membership-types',
+      optionLabel: 'name',
+      optionValue: 'id',
+      meta: {
+        gqlQuery: MEMBERSHIP_TYPE_QUERY,
+      },
+      pagination: {
+        pageSize: 20,
+        mode: 'server',
+      },
+      filters: [
+        {
+          field: 'business.id',
+          operator: 'eq',
+          value: business?.id,
+        },
+      ],
+      sorters: [
+        {
+          field: 'created',
+          order: 'desc',
+        },
+      ],
+    });
 
   const handleOnFinish = (values: any) => {
     onFinish({
@@ -34,12 +67,15 @@ export const EditBenefit = () => {
   return (
     <div>
       <Row justify="center" gutter={[32, 32]}>
-        <Col xs={24} xl={10}>
+        <Col xs={24} xl={8}>
           <Edit
             goBack={<Button>←</Button>}
             isLoading={formLoading}
             saveButtonProps={saveButtonProps}
             breadcrumb={false}
+            headerButtons={({ listButtonProps }) => (
+              <>{listButtonProps && <ListButton {...listButtonProps} />}</>
+            )}
           >
             <Form
               {...formProps}
@@ -47,7 +83,11 @@ export const EditBenefit = () => {
               requiredMark={requiredOptionalMark}
               onFinish={handleOnFinish}
             >
-              <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+              <Form.Item
+                label="Name"
+                name="name"
+                rules={[{ required: true, message: '' }]}
+              >
                 <Input placeholder="Name" />
               </Form.Item>
               <Form.Item
@@ -58,13 +98,32 @@ export const EditBenefit = () => {
                 <TextArea placeholder="Description"></TextArea>
               </Form.Item>
               <Form.Item
+                style={{ width: '100%' }}
                 name="points"
                 label="Points"
                 rules={[{ required: true, message: '' }]}
               >
-                <InputNumber addonAfter="points" min={0} />
+                <InputNumber
+                  style={{ width: '100%' }}
+                  addonAfter="points"
+                  min={0}
+                />
               </Form.Item>
               <Form.Item
+                name="membershipTypeId"
+                label="Membership Type"
+                style={{ width: '100%' }}
+                initialValue={formProps?.initialValues?.membershipType?.id}
+              >
+                <Select
+                  style={{ width: '100%' }}
+                  options={membershipTypes.options}
+                  placeholder="Membership Type"
+                  allowClear={true}
+                />
+              </Form.Item>
+              <Form.Item
+                style={{ width: '100%' }}
                 name="expiryDate"
                 label="Expiry Date"
                 getValueProps={(value) => ({
@@ -72,8 +131,10 @@ export const EditBenefit = () => {
                 })}
               >
                 <DatePicker
+                  showNow={false}
+                  style={{ width: '100%' }}
                   format="D. M. YYYY"
-                  placeholder="Date"
+                  placeholder="Expiry Date"
                   allowClear={true}
                   needConfirm={false}
                 />

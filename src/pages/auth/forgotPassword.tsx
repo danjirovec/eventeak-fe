@@ -29,9 +29,9 @@ import {
   FormProps,
   theme,
 } from 'antd';
-import { SVGLogo } from 'components/layout/svg-logo';
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { requiredOptionalMark } from 'components/requiredMark';
+import logo from 'assets/eventeak.png';
 
 type ResetPassworProps = ForgotPasswordPageProps<
   LayoutProps,
@@ -55,7 +55,7 @@ export const ForgotPasswordPage: React.FC<ResetPassworProps> = ({
   const routerType = useRouterType();
   const Link = useLink();
   const { Link: LegacyLink } = useRouterContext();
-  useDocumentTitle('Forgot Password - Applausio');
+  useDocumentTitle('Forgot Password - Eventeak');
 
   const ActiveLink = routerType === 'legacy' ? LegacyLink : Link;
 
@@ -73,7 +73,9 @@ export const ForgotPasswordPage: React.FC<ResetPassworProps> = ({
         }}
       >
         {title ?? (
-          <ThemedTitleV2 collapsed={false} text="Applausio" icon={SVGLogo} />
+          <ActiveLink to="/">
+            <img src={logo} />
+          </ActiveLink>
         )}
       </div>
     );
@@ -109,12 +111,11 @@ export const ForgotPasswordPage: React.FC<ResetPassworProps> = ({
         <Form.Item
           name="email"
           label="Email"
-          hasFeedback
           rules={[
             { required: true, message: '' },
             {
               type: 'email',
-              message: 'Invalid email address',
+              message: '',
             },
           ]}
         >

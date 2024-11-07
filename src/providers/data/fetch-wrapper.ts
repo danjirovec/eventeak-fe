@@ -1,5 +1,5 @@
 import { GraphQLFormattedError } from 'graphql';
-import { getAuth } from 'util/get-auth';
+import { useGlobalStore } from '../context/store';
 
 type Error = {
   message: string;
@@ -7,13 +7,14 @@ type Error = {
 };
 
 const customFetch = async (url: string, options: RequestInit) => {
+  const { user } = useGlobalStore.getState();
   const headers = options.headers as Record<string, string>;
 
   return await fetch(url, {
     ...options,
     headers: {
       ...headers,
-      Authorization: `Bearer ${getAuth().accessToken}`,
+      Authorization: `Bearer ${user?.accessToken}`,
       'Content-Type': 'application/json',
       'Apollo-Require-Preflight': 'true',
     },

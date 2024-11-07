@@ -1,21 +1,34 @@
 import React, { useState } from 'react';
-import { Edit, useForm } from '@refinedev/antd';
-import { Button, Card, Col, Form, Input, notification, Row, Space } from 'antd';
+import { Edit, ListButton, useForm } from '@refinedev/antd';
+import {
+  Button,
+  Card,
+  Col,
+  Divider,
+  Flex,
+  Form,
+  Input,
+  notification,
+  Row,
+  Select,
+  Space,
+} from 'antd';
 import { UPDATE_BUSINESS_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import { useGo } from '@refinedev/core';
-import { getBusiness } from 'util/get-business';
-import { useShared } from 'providers/context/business';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadEdit } from 'components/upload/util';
-import { getAuth } from 'util/get-auth';
 import { SendOutlined } from '@ant-design/icons';
 import { BASE_API_URL } from 'providers';
+import { useGlobalStore } from 'providers/context/store';
+import { currencyOptions } from 'enum/enum';
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
 export const EditBusiness = () => {
-  const { setSharedValue } = useShared();
+  const user = useGlobalStore((state) => state.user);
+  const business = useGlobalStore((state) => state.business);
+  const setBusiness = useGlobalStore((state) => state.setBusiness);
   const [api, contextHolder] = notification.useNotification();
   const [formData, setFormData] = useState<FormData | null>(new FormData());
   const { form: inviteForm } = useForm();
@@ -46,12 +59,18 @@ export const EditBusiness = () => {
   };
 
   const handleOnClick = async () => {
+    const valid = await inviteForm.validateFields(['email']).catch(() => {
+      return;
+    });
+    if (!valid) {
+      return;
+    }
     try {
       const response = await fetch(`${BASE_API_URL}invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${getAuth().accessToken}`,
+          Authorization: `Bearer ${user?.accessToken}`,
         },
         body: JSON.stringify({
           email: inviteForm.getFieldValue('email'),
@@ -63,7 +82,7 @@ export const EditBusiness = () => {
       if (!response.ok) {
         showNotification('error', resJson.message);
       } else {
-        showNotification('success', 'User invited');
+        showNotification('success', 'Invitation sent');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -83,22 +102,19 @@ export const EditBusiness = () => {
       logoUrl: logoUrl,
     });
 
-    if (id == getBusiness().id) {
-      sessionStorage.setItem(
-        'business',
-        JSON.stringify({
-          id: id,
-          name: values.name,
-        }),
-      );
-      setSharedValue((prev) => prev + 1);
+    if (id && id == business?.id) {
+      setBusiness({
+        name: values.name,
+        id: id,
+        currency: values.currency,
+      });
     }
   };
 
   return (
     <React.Fragment>
       <Row justify="center" gutter={[32, 32]}>
-        <Col xs={24} xl={10}>
+        <Col xs={24} xl={8}>
           <Edit
             canDelete
             goBack={<Button>←</Button>}
@@ -109,10 +125,12 @@ export const EditBusiness = () => {
             }}
             breadcrumb={false}
             headerProps={{ onBack: goToListPage }}
+            headerButtons={({ listButtonProps }) => (
+              <>{listButtonProps && <ListButton {...listButtonProps} />}</>
+            )}
           >
             {contextHolder}
             <Form
-              variant="filled"
               {...formProps}
               layout="vertical"
               requiredMark={requiredOptionalMark}
@@ -125,6 +143,18 @@ export const EditBusiness = () => {
               >
                 <Input placeholder="Name" />
               </Form.Item>
+              <Form.Item
+                label="Currency"
+                name="currency"
+                initialValue={formProps?.initialValues?.currency}
+                rules={[{ required: true, message: '' }]}
+              >
+                <Select
+                  allowClear
+                  placeholder="Currency"
+                  options={currencyOptions}
+                />
+              </Form.Item>
               <Form.Item name="logoUrl" label="Logo" hasFeedback>
                 <SupaUpload
                   folder="businesses"
@@ -133,33 +163,27 @@ export const EditBusiness = () => {
                 />
               </Form.Item>
             </Form>
-          </Edit>
-        </Col>
-      </Row>
-      <Row justify="center" gutter={[32, 32]} style={{ marginTop: 50 }}>
-        <Col xs={24} xl={10}>
-          <Card>
-            {contextHolder}
-            <Form form={inviteForm} layout="vertical" variant="filled">
-              <Space style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <Divider />
+            <Form form={inviteForm} layout="vertical">
+              <Flex align="flex-end" gap={8}>
                 <Form.Item
                   label="Invite user to manage this business"
                   name="email"
-                  style={{ margin: 0 }}
+                  style={{ margin: 0, width: '100%' }}
                   rules={[{ type: 'email', message: '' }]}
                 >
-                  <Input placeholder="Email"></Input>
+                  <Input placeholder="Email" />
                 </Form.Item>
                 <Button
                   icon={<SendOutlined />}
-                  type="primary"
+                  type="default"
                   onClick={handleOnClick}
                 >
                   Send
                 </Button>
-              </Space>
+              </Flex>
             </Form>
-          </Card>
+          </Edit>
         </Col>
       </Row>
     </React.Fragment>

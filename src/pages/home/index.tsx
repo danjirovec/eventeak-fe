@@ -3,48 +3,62 @@ import { UpcomingEvents } from 'components';
 import { RevenueChart } from 'components/home';
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { DashboardTotalCountCard } from 'components/home';
-import { useCustom, useList } from '@refinedev/core';
+import { BaseOption, useCustom, useList } from '@refinedev/core';
 import {
   BUSINESS_METRICS_QUERY,
   EVENTS_QUERY,
+  ORDERS_GRAPH,
   USER_BUSINESSES_QUERY,
 } from 'graphql/queries';
 import { useSelect } from '@refinedev/antd';
 import { EventsListQuery, UserBusinessesListQuery } from '/graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import SelectSkeleton from 'components/skeleton/select';
-import { getAuth } from 'util/get-auth';
-import { getBusiness } from 'util/get-business';
-import { setBusiness } from 'util/set-business';
-import { useShared } from 'providers/context/business';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
+import { useGlobalStore } from 'providers/context/store';
 
 export const Home = () => {
   const [isDashLoading, setIsDashLoading] = useState(true);
-  useDocumentTitle('Dashboard - Applausio');
-  const { setSharedValue } = useShared();
+  const user = useGlobalStore((state) => state.user);
+  const business = useGlobalStore((state) => state.business);
+  const setBusiness = useGlobalStore((state) => state.setBusiness);
+  useDocumentTitle('Dashboard - Eventeak');
 
   const {
     data: metrics,
-    isLoading: metricsLoading,
-    refetch: countsRefetch,
+    isFetching: metricsLoading,
+    refetch: metricsRefetch,
   } = useCustom({
     url: '',
     method: 'post',
     meta: {
       gqlQuery: BUSINESS_METRICS_QUERY,
-      empty: getBusiness().id ? false : true,
-      meta: JSON.stringify({ businessId: getBusiness().id }),
+      meta: JSON.stringify({ businessId: business?.id }),
+      empty: !business,
     },
   });
 
-  const { selectProps, queryResult } = useSelect<
+  const {
+    data: orders,
+    isFetching: ordersLoading,
+    refetch: ordersRefetch,
+  } = useCustom({
+    url: '',
+    method: 'post',
+    meta: {
+      gqlQuery: ORDERS_GRAPH,
+      meta: business?.id,
+      empty: !business,
+    },
+  });
+
+  const { selectProps, query } = useSelect<
     GetFieldsFromList<UserBusinessesListQuery>
   >({
     resource: 'businessUsers',
-    optionLabel: 'business',
-    optionValue: 'business',
+    optionLabel: (o) => o.business.name,
+    optionValue: (o) => o.business.id,
     meta: {
       gqlQuery: USER_BUSINESSES_QUERY,
     },
@@ -56,7 +70,7 @@ export const Home = () => {
       {
         field: 'user.id',
         operator: 'eq',
-        value: getAuth().userId,
+        value: user?.id,
       },
       {
         field: 'role',
@@ -72,9 +86,11 @@ export const Home = () => {
     ],
   });
 
+  const businesses = query.data?.data;
+
   const {
     data: eventsData,
-    isLoading: eventsLoading,
+    isFetching: eventsLoading,
     refetch: eventsRefetch,
   } = useList<GetFieldsFromList<EventsListQuery>>({
     resource: 'events',
@@ -96,37 +112,47 @@ export const Home = () => {
       {
         field: 'businessId',
         operator: 'eq',
-        value: getBusiness().id,
+        value: business?.id,
       },
     ],
     meta: {
       gqlQuery: EVENTS_QUERY,
-      empty: getBusiness().id ? false : true,
+      empty: !business,
     },
   });
 
   useEffect(() => {
-    if (!metricsLoading && !queryResult.isLoading && !eventsLoading) {
+    if (
+      !metricsLoading &&
+      !query.isFetching &&
+      !eventsLoading &&
+      !ordersLoading
+    ) {
       setIsDashLoading(false);
     }
-  }, [metricsLoading, queryResult.isLoading, eventsLoading]);
+  }, [metricsLoading, query.isFetching, eventsLoading, ordersLoading]);
 
-  const handleBusinessChange = (value: any, option: any) => {
-    setBusiness(option.title, value);
-    setSharedValue((prev) => prev + 1);
-    countsRefetch();
+  const handleBusinessChange = (value: BaseOption) => {
+    const selectedBusiness = businesses?.find(
+      (b) => b.business.id === String(value),
+    );
+    if (selectedBusiness) {
+      setBusiness({
+        name: selectedBusiness?.business.name,
+        id: selectedBusiness?.business.id,
+        currency: selectedBusiness?.business.currency,
+      });
+    }
+    metricsRefetch();
+    ordersRefetch();
     eventsRefetch();
-    queryResult.refetch();
+    query.refetch();
   };
 
   return (
     <div>
       <div>
-        <Row
-          gutter={[32, 32]}
-          justify="start"
-          style={{ marginBottom: 16 }}
-        >
+        <Row gutter={[32, 32]} justify="start" style={{ marginBottom: 16 }}>
           <Col xs={24} sm={24} xl={16}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
               <h2 style={{ margin: 0 }}>Business</h2>
@@ -135,28 +161,14 @@ export const Home = () => {
                   onChange={handleBusinessChange}
                   style={{ width: 300 }}
                   defaultValue={{
-                    label: (
-                      <h2
-                        style={{
-                          margin: 0,
-                        }}
-                      >
-                        {getBusiness().name ? getBusiness().name : 'No data'}
-                      </h2>
-                    ),
-                    value: getBusiness().id,
+                    label: business ? business.name : 'No data',
+                    value: business?.id,
                   }}
-                  placeholder={
-                    <h2 style={{ margin: 0 }}>Select bussines to manage</h2>
-                  }
+                  placeholder={<h2 style={{ margin: 0 }}>Business</h2>}
                   {...selectProps}
-                  options={queryResult.data?.data.map((business) => ({
-                    value: business.business.id,
-                    label: (
-                      <h2 style={{ margin: 0 }}>{business.business.name}</h2>
-                    ),
-                    title: business.business.name,
-                  }))}
+                  options={selectProps.options}
+                  labelRender={(o) => <h2 style={{ margin: 0 }}>{o.label}</h2>}
+                  optionRender={(o) => <h2 style={{ margin: 0 }}>{o.label}</h2>}
                   showSearch={false}
                 />
               ) : (
@@ -167,12 +179,9 @@ export const Home = () => {
         </Row>
       </div>
       <div>
-        <h2>Totals</h2>
-        <Row
-          gutter={[32, 32]}
-          style={{ marginBottom: 16 }}
-        >
-          <Col xs={24} sm={24} xl={8}>
+        <h2>Last 30 days</h2>
+        <Row gutter={[32, 32]} style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={24} xl={6}>
             <DashboardTotalCountCard
               resource="customers"
               isLoading={isDashLoading}
@@ -181,7 +190,7 @@ export const Home = () => {
               }
             />
           </Col>
-          <Col xs={24} sm={24} xl={8}>
+          <Col xs={24} sm={24} xl={6}>
             <DashboardTotalCountCard
               resource="memberships"
               isLoading={isDashLoading}
@@ -190,12 +199,21 @@ export const Home = () => {
               }
             />
           </Col>
-          <Col xs={24} sm={24} xl={8}>
+          <Col xs={24} sm={24} xl={6}>
             <DashboardTotalCountCard
               resource="events"
               isLoading={isDashLoading}
               counts={
                 metrics?.data ? metrics.data.getBusinessMetrics.events : []
+              }
+            />
+          </Col>
+          <Col xs={24} sm={24} xl={6}>
+            <DashboardTotalCountCard
+              resource="tickets"
+              isLoading={isDashLoading}
+              counts={
+                metrics?.data ? metrics.data.getBusinessMetrics.tickets : []
               }
             />
           </Col>
@@ -223,7 +241,7 @@ export const Home = () => {
           }}
         >
           <h2>Revenue</h2>
-          <RevenueChart />
+          <RevenueChart data={orders ? orders : []} isLoading={isDashLoading} />
         </Col>
       </Row>
     </div>

@@ -1,4 +1,4 @@
-import { ClockCircleOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, ClockCircleTwoTone } from '@ant-design/icons';
 import React, { useState, useEffect } from 'react';
 
 function LiveClock() {
@@ -14,7 +14,10 @@ function LiveClock() {
 
   return (
     <div style={{ display: 'flex', marginRight: 50, alignItems: 'center' }}>
-      <ClockCircleOutlined style={{ marginRight: 10 }} />
+      <ClockCircleTwoTone
+        twoToneColor={'#007965'}
+        style={{ marginRight: 10 }}
+      />
       <p style={{ marginBottom: 0, width: 30 }}>
         <strong>
           {currentTime.toLocaleTimeString([], {

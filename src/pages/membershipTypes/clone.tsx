@@ -4,9 +4,10 @@ import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_MEMBERSHIP_TYPE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
-import { getBusiness } from 'util/get-business';
+import { useGlobalStore } from 'providers/context/store';
 
 export const CloneMembershipType = () => {
+  const business = useGlobalStore((state) => state.business);
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -19,9 +20,15 @@ export const CloneMembershipType = () => {
   const { formProps, saveButtonProps, onFinish } = useForm({
     action: 'clone',
     resource: 'membership-types',
-    redirect: false,
+    redirect: 'list',
     mutationMode: 'pessimistic',
-    onMutationSuccess: goToListPage,
+    successNotification() {
+      return {
+        description: 'Success',
+        message: 'Successfully created a membership type',
+        type: 'success',
+      };
+    },
     meta: {
       gqlMutation: CREATE_MEMBERSHIP_TYPE_MUTATION,
     },
@@ -31,14 +38,15 @@ export const CloneMembershipType = () => {
   const handleOnFinish = (values: any) => {
     onFinish({
       ...values,
-      businessId: getBusiness().id,
+      businessId: business?.id,
     });
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
-      <Col xs={24} xl={10}>
+      <Col xs={24} xl={8}>
         <Create
+          title="Clone Membership Type"
           saveButtonProps={saveButtonProps}
           goBack={<Button>←</Button>}
           breadcrumb={false}
@@ -51,7 +59,17 @@ export const CloneMembershipType = () => {
             onFinish={handleOnFinish}
           >
             <Form.Item label="Name" name="name" rules={[{ required: true }]}>
-              <Input placeholder="Name" />
+              <Input
+                placeholder="Name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea placeholder="Description" />
             </Form.Item>
           </Form>
         </Create>

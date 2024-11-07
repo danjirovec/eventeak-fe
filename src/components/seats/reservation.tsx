@@ -2,9 +2,9 @@
 // @ts-nocheck
 import { fabric } from 'fabric';
 import { useEffect, useRef, useState } from 'react';
-import Swal from 'sweetalert2';
 import THEME from 'util/globals';
 import { v4 as uuidv4 } from 'uuid';
+import { notification } from 'antd';
 
 let rows = {};
 let firstTime = false;
@@ -16,6 +16,13 @@ const r = 7;
 const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
   const canvasDivRef = useRef(null);
   const [localTickets, setLocalTickets] = useState([]);
+  const [api, contextHolder] = notification.useNotification();
+
+  const selectionWarning = (type: NotificationType) => {
+    api[type]({
+      message: "You can't select available and unavailable seats",
+    });
+  };
 
   window.addEventListener('resize', () => {
     if (canvasDivRef && canvasDivRef.current && canvas) {
@@ -68,7 +75,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
       rows[key].seats = json.rows[key].seats;
 
       // row label
-      const text = new fabric.Text(`${json.rows[key].label}`, {
+      const text = new fabric.Text(`${json.rows[key].rowName}`, {
         fontSize: r * 2,
         textAlign: 'bottom',
         originX: 'center',
@@ -95,7 +102,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
       // draw row
       for (let i = 0; i < numberOfSeats; ++i) {
         const seat = new fabric.Circle({
-          fill: json.rows[key].categoryColor,
+          fill: json.rows[key].sectionColor,
           top: pos[1],
           left: pos[0],
           radius: r,
@@ -140,19 +147,21 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
         seat.isStart = false;
         seat.isEnd = false;
         seat.id = uuidv4();
-        seat.sectionName = json.rows[key].seats[i].category ?? null;
+        seat.sectionName = json.rows[key].seats[i].sectionName ?? null;
         seat.sectionId = json.rows[key].seats[i].sectionId ?? null;
-        seat.sectionColor = json.rows[key].categoryColor;
+        seat.sectionColor = json.rows[key].sectionColor ?? null;
         seat.seatId = json.rows[key].seats[i].seatId ?? null;
-        seat.seatNumber = i + startFrom;
-        seat.epcId = json.rows[key].seats[i].epcId ?? null;
-        seat.epcPrice = json.rows[key].seats[i].epcPrice ?? null;
-        seat.price = json.rows[key].seats[i].epcPrice ?? null;
+        seat.rowId = json.rows[key].seats[i].rowId ?? null;
+        seat.seatNumber = json.rows[key].seats[i].seatNumber ?? null;
+        seat.pcId = json.rows[key].seats[i].pcId ?? null;
+        seat.pcPrice = json.rows[key].seats[i].pcPrice ?? null;
+        seat.price = json.rows[key].seats[i].pcPrice ?? null;
         seat.seatIndex = i;
         seat.reserved = json.rows[key].seats[i].reserved;
+        seat.validated = json.rows[key].seats[i].ticketId ? false : null;
         seat.ticketId = json.rows[key].seats[i].ticketId ?? null;
         if (seat.reserved) seat.set('fill', '#cccccc');
-        seat.rowName = json.rows[key].label;
+        seat.rowName = json.rows[key].rowName;
 
         if (i == 0) seat.isStart = true;
         if (i == numberOfSeats - 1) seat.isEnd = true;
@@ -203,11 +212,10 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
     }
   }, [removed]);
 
-
   useEffect(() => {
     if (canvas && eventData) {
       canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-      loadDesign(eventData.venueData);
+      loadDesign(eventData.seatMap);
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
@@ -270,7 +278,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
     canvas.renderOnAddRemove = false;
 
     if (eventData) {
-      loadDesign(eventData.venueData);
+      loadDesign(eventData.seatMap);
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
@@ -288,7 +296,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
     tickets.forEach((seat) => {
       if (seat.discount) {
         seat.discount = null;
-        seat.price = seat.epcPrice;
+        seat.price = seat.pcPrice;
       }
       if (!seat.reserved) {
         seat.fill = seat.sectionColor;
@@ -322,9 +330,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
   const handleSeatSelection = (seat, selected) => {
     if (selected.length > 0 && seat.reserved !== selected[0].reserved) {
       handleSelectionClear(tickets);
-      Swal.fire({
-        title: `Cant mix reserved and not reserved`,
-      });
+      selectionWarning('warning');
       return;
     }
 
@@ -335,7 +341,11 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
       setLocalTickets([...selected, seat]);
       setTickets([...selected, seat]);
     } else {
-      seat.fill = seat.sectionColor;
+      if (seat.reserved) {
+        seat.fill = '#cccccc';
+      } else {
+        seat.fill = seat.sectionColor;
+      }
       const filteredTickets = selected.filter((item) => seat.id !== item.id);
       setLocalTickets(filteredTickets);
       setTickets(filteredTickets);
@@ -419,6 +429,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
         width: '100%',
       }}
     >
+      {contextHolder}
       <canvas id="canvas"></canvas>
     </div>
   );

@@ -1,32 +1,40 @@
 import React, { useState } from 'react';
-
 import { CreateButton } from '@refinedev/antd';
 import { useCreate, useDelete, useList, useNavigation } from '@refinedev/core';
-
-import { Button, Col, DatePicker, Form, Modal, Popconfirm, Row } from 'antd';
-
+import {
+  Button,
+  Col,
+  DatePicker,
+  Flex,
+  Form,
+  Modal,
+  Popconfirm,
+  Row,
+} from 'antd';
 import { UpcomingEvents } from 'components';
-
 import { Calendar } from 'components/scheduler';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { EventsListQuery } from 'graphql/types';
-import { getBusiness } from 'util/get-business';
 import { EVENTS_QUERY } from 'graphql/queries';
 import dayjs from 'dayjs';
 import { CalendarCategories } from 'components/scheduler/categories';
 import { CategoryTag } from 'components';
 import { Text } from 'components/text';
 import {
-  CalendarOutlined,
-  CommentOutlined,
-  FlagOutlined,
-  HomeOutlined,
-  HourglassOutlined,
-  SoundOutlined,
+  CalendarTwoTone,
+  CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  HomeTwoTone,
+  HourglassTwoTone,
+  MessageTwoTone,
+  ShoppingCartOutlined,
+  SoundTwoTone,
+  TagTwoTone,
 } from '@ant-design/icons';
 import { requiredOptionalMark } from 'components/requiredMark';
 import { CREATE_EVENT_MUTATION } from 'graphql/mutations';
-import { uploadCreate } from 'components/upload/util';
+import { useGlobalStore } from 'providers/context/store';
 
 type EventInfoProps = {
   id: string;
@@ -36,8 +44,9 @@ type EventInfoProps = {
 export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
+  const business = useGlobalStore((state) => state.business);
   const [form] = Form.useForm();
-  const { create, edit } = useNavigation();
+  const { create, edit, replace } = useNavigation();
   const { mutate: deleteMutate, isLoading: deleteLoading } = useDelete();
   const { mutate: cloneMutate, isLoading: cloneLoading } = useCreate();
   const [open, setOpen] = useState(false);
@@ -48,7 +57,9 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
     [],
   );
 
-  const { data, isLoading } = useList<GetFieldsFromList<EventsListQuery>>({
+  const { data, isFetching: isLoading } = useList<
+    GetFieldsFromList<EventsListQuery>
+  >({
     resource: 'events',
     pagination: {
       pageSize: 50,
@@ -61,19 +72,21 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
     ],
     filters: [
       {
-        field: 'businessId',
+        field: 'business.id',
         operator: 'eq',
-        value: getBusiness().id,
+        value: business?.id,
       },
       {
-        field: 'category',
+        field: 'template.category',
         operator: 'in',
         value: selectedEventCategory,
       },
     ],
     meta: {
       gqlQuery: EVENTS_QUERY,
-      empty: getBusiness().id ? false : true,
+    },
+    queryOptions: {
+      enabled: !!business,
     },
   });
 
@@ -102,30 +115,18 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
   };
 
   const handleClone = async () => {
-    await form.validateFields();
+    await form.validateFields().catch(() => {
+      return;
+    });
     if (eventInfo?.id) {
-      const eventToClone = data?.data.filter(
+      const eventToClone = data?.data.find(
         (event) => event.id === eventInfo.id,
-      )[0];
-      const {
-        id,
-        business,
-        created,
-        venue,
-        eventTemplate,
-        posterUrl,
-        ...event
-      } = {
-        ...eventToClone,
-      };
-      const poster = await uploadCreate('posters', new FormData(), posterUrl);
+      );
       const values = {
-        ...event,
-        posterUrl: poster,
+        name: eventToClone?.name,
         date: form.getFieldValue('date'),
         businessId: business?.id,
-        venueId: venue?.id,
-        eventTemplateId: eventTemplate?.id,
+        templateId: eventToClone?.template.id,
       };
       cloneMutate({
         resource: 'events',
@@ -142,7 +143,7 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
   };
 
   return (
-    <div>
+    <Flex vertical>
       <Modal
         destroyOnClose
         centered
@@ -153,19 +154,25 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
           <Popconfirm
             title={
               <Text size="sm" style={{ fontWeight: 600 }}>
-                Are you sure?
+                Delete?
               </Text>
             }
             onConfirm={handleDelete}
             okText="Yes"
             cancelText="No"
           >
-            <Button loading={deleteLoading} danger key="submit" type="default">
+            <Button
+              icon={<DeleteOutlined />}
+              loading={deleteLoading}
+              danger
+              key="submit"
+              type="default"
+            >
               Delete
             </Button>
           </Popconfirm>,
           <Popconfirm
-            title="Choose date"
+            title="Select date"
             description={
               <Form
                 form={form}
@@ -179,6 +186,8 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
                   rules={[{ required: true, message: '' }]}
                 >
                   <DatePicker
+                    minDate={dayjs()}
+                    showNow={false}
                     showTime
                     format="D. M. YYYY - H:mm"
                     placeholder="Date - Time"
@@ -192,12 +201,30 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
             okText="Duplicate"
             cancelText="Cancel"
           >
-            <Button loading={cloneLoading} key="submit" type="default">
+            <Button
+              icon={<CopyOutlined />}
+              loading={cloneLoading}
+              key="submit"
+              type="default"
+            >
               Duplicate
             </Button>
           </Popconfirm>,
-          <Button key="submit" type="primary" onClick={handleEdit}>
+          <Button
+            icon={<EditOutlined />}
+            key="submit"
+            type="default"
+            onClick={handleEdit}
+          >
             Edit
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            icon={<ShoppingCartOutlined />}
+            onClick={() => replace(`/checkout?eventId=${eventInfo?.id}`)}
+          >
+            Checkout
           </Button>,
         ]}
       >
@@ -206,19 +233,30 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
           .map((event) => (
             <div
               key={event.id}
-              style={{ display: 'flex', flexDirection: 'column', gap: 15 }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 15,
+                marginBottom: 30,
+              }}
             >
               <div style={{ marginTop: 15 }}>
-                <FlagOutlined style={{ marginRight: 10 }} />
+                <TagTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
                   Category:
                 </Text>
-                <CategoryTag category={event.category} />
+                <CategoryTag category={event.template.category} />
               </div>
               <div>
-                <CalendarOutlined style={{ marginRight: 10 }} />
+                <CalendarTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
-                  Date:
+                  Date & Time:
                 </Text>
                 <Text size="sm" strong>
                   {dayjs(event.date)
@@ -227,37 +265,54 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
                 </Text>
               </div>
               <div>
-                <HomeOutlined style={{ marginRight: 10 }} />
+                <HomeTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
                   Venue:
                 </Text>
                 <Text strong size="sm">
-                  {event.venue.name}
+                  {event.template.venue.name}
                 </Text>
               </div>
               <div>
-                <HourglassOutlined style={{ marginRight: 10 }} />
+                <HourglassTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
                   Length:
                 </Text>
-                <Text strong size="sm">{`${event.length} minutes`}</Text>
+                <Text
+                  strong
+                  size="sm"
+                >{`${event.template.length} minutes`}</Text>
               </div>
               <div>
-                <SoundOutlined style={{ marginRight: 10 }} />
+                <SoundTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
                   Audio:
                 </Text>
                 <Text strong size="sm">
-                  {event.language}
+                  {event.template.language}
                 </Text>
               </div>
               <div>
-                <CommentOutlined style={{ marginRight: 10 }} />
+                <MessageTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
                 <Text size="sm" style={{ marginRight: 5 }}>
                   Subtitles:
                 </Text>
                 <Text strong size="sm">
-                  {event.subtitles ? event.subtitles : 'None'}
+                  {event.template?.subtitles
+                    ? event.template?.subtitles
+                    : 'None'}
                 </Text>
               </div>
             </div>
@@ -271,7 +326,7 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
             size="large"
             style={{ marginBottom: '1rem' }}
           >
-            Create event
+            Create Event
           </CreateButton>
           <UpcomingEvents loading={isLoading} data={data} />
           <CalendarCategories
@@ -291,6 +346,6 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
         </Col>
       </Row>
       {children}
-    </div>
+    </Flex>
   );
 };

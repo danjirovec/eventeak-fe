@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LoginPageProps,
   LoginFormTypes,
@@ -8,7 +8,6 @@ import {
   useLogin,
   useRouterContext,
 } from '@refinedev/core';
-import { ThemedTitleV2 } from '@refinedev/antd';
 import {
   bodyStyles,
   containerStyles,
@@ -30,10 +29,11 @@ import {
   Divider,
   FormProps,
   theme,
+  Flex,
 } from 'antd';
-import { SVGLogo } from 'components/layout/svg-logo';
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { requiredOptionalMark } from 'components/requiredMark';
+import logo from 'assets/eventeak.png';
 
 const { Text, Title } = Typography;
 const { useToken } = theme;
@@ -56,7 +56,8 @@ export const LoginPage: React.FC<LoginProps> = ({
   const routerType = useRouterType();
   const Link = useLink();
   const { Link: LegacyLink } = useRouterContext();
-  useDocumentTitle('Login - Applausio');
+  useDocumentTitle('Login - Eventeak');
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const ActiveLink = routerType === 'legacy' ? LegacyLink : Link;
 
@@ -76,7 +77,9 @@ export const LoginPage: React.FC<LoginProps> = ({
         }}
       >
         {title ?? (
-          <ThemedTitleV2 collapsed={false} text="Applausio" icon={SVGLogo} />
+          <ActiveLink to="/">
+            <img src={logo} />
+          </ActiveLink>
         )}
       </div>
     );
@@ -160,12 +163,11 @@ export const LoginPage: React.FC<LoginProps> = ({
           <Form.Item
             name="email"
             label={'Email'}
-            hasFeedback
             rules={[
               { required: true, message: '' },
               {
                 type: 'email',
-                message: 'Invalid email address',
+                message: '',
               },
             ]}
           >
@@ -174,13 +176,16 @@ export const LoginPage: React.FC<LoginProps> = ({
           <Form.Item
             name="password"
             label={'Password'}
-            hasFeedback
             rules={[{ required: true, message: '' }]}
           >
-            <Input
+            <Input.Password
+              visibilityToggle={{
+                visible: passwordVisible,
+                onVisibleChange: setPasswordVisible,
+              }}
               type="password"
               autoComplete="current-password"
-              placeholder="●●●●●●●●"
+              placeholder="Password"
             />
           </Form.Item>
           <div
@@ -262,6 +267,19 @@ export const LoginPage: React.FC<LoginProps> = ({
               {CardContent}
             </>
           )}
+          <Flex style={{ marginTop: 10 }} justify="center">
+            <Text>
+              <ActiveLink
+                to="/conditions"
+                style={{
+                  fontWeight: '400',
+                  color: 'grey',
+                }}
+              >
+                {' Privacy Policy'}
+              </ActiveLink>
+            </Text>
+          </Flex>
         </Col>
       </Row>
     </Layout>

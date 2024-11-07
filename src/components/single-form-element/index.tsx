@@ -174,7 +174,7 @@ export const SingleElementForm: React.FC<SingleElementFormProps> = ({
                 onClick={onClick}
                 type="link"
                 size="small"
-                style={{ padding: 0, color: '#34a3f5' }}
+                style={{ padding: 0, color: '#f58634' }}
               >
                 Set New {itemProps?.label}
               </Button>

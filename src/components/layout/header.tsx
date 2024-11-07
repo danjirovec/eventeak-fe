@@ -1,13 +1,12 @@
 import React from 'react';
 import CurrentUser from './current-user';
 import { Layout, Space } from 'antd';
-import { useShared } from 'providers/context/business';
-import { getBusiness } from 'util/get-business';
 import { LiveClock } from '../home';
-import { ShopOutlined } from '@ant-design/icons';
+import { ShopOutlined, ShopTwoTone } from '@ant-design/icons';
+import { useGlobalStore } from 'providers/context/store';
 
 const Header = () => {
-  const { sharedValue } = useShared();
+  const business = useGlobalStore((state) => state.business);
   const headerStyles: React.CSSProperties = {
     background: '#fff',
     display: 'flex',
@@ -38,9 +37,9 @@ const Header = () => {
             flexWrap: 'wrap',
           }}
         >
-          <ShopOutlined style={{ marginRight: 10 }} />
+          <ShopTwoTone twoToneColor={'#007965'} style={{ marginRight: 10 }} />
           <p style={{ marginBottom: 0 }}>
-            <strong>{getBusiness().name || 'No data'}</strong>
+            <strong>{business?.name || 'No data'}</strong>
           </p>
         </div>
         <LiveClock />

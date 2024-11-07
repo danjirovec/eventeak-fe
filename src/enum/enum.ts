@@ -34,3 +34,14 @@ export const languageOptions = Object.keys(Language).map((key) => ({
   value: key,
   label: Language[key as keyof typeof Language],
 }));
+
+export enum Currency {
+  CZK = 'CZK',
+  EUR = 'EUR',
+  USD = 'USD',
+}
+
+export const currencyOptions = Object.keys(Currency).map((key) => ({
+  value: key,
+  label: Currency[key as keyof typeof Currency],
+}));

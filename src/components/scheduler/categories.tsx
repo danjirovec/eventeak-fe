@@ -1,11 +1,15 @@
 import React from 'react';
-import { FlagOutlined } from '@ant-design/icons';
-import { Card, Checkbox } from 'antd';
+import { TagOutlined } from '@ant-design/icons';
+import { Card, Checkbox, Flex } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { Text } from '../text';
 
 import { Category } from 'enum/enum';
+import { Category as CategoryType } from 'graphql/schema.types';
+import ColorBadge from '../badge';
+import { CategoryTag } from '../category-tag';
+import { getEventColor } from 'util/event-color';
 
 type CalendarCategoriesProps = {
   onChange?: (e: CheckboxChangeEvent) => void;
@@ -21,7 +25,7 @@ export const CalendarCategories: React.FC<CalendarCategoriesProps> = ({
         style={{ marginTop: '1rem' }}
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FlagOutlined />
+            <TagOutlined />
             <Text size="sm" style={{ marginLeft: '0.7rem' }}>
               Category
             </Text>
@@ -37,21 +41,18 @@ export const CalendarCategories: React.FC<CalendarCategoriesProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 5,
+            gap: 20,
           }}
         >
-          {Object.values(Category)?.map((item) => (
-            <div
-              key={item}
-              style={{
-                marginTop: 5,
-                marginBottom: 5,
-              }}
-            >
-              <Checkbox value={item} onChange={onChange}>
-                <Text>{item}</Text>
-              </Checkbox>
-            </div>
+          {Object.keys(Category).map((item) => (
+            <Checkbox value={item} onChange={onChange}>
+              <Flex align="center" gap={5}>
+                <ColorBadge
+                  color={getEventColor(item as CategoryType).background}
+                />
+                <CategoryTag category={item as CategoryType} />
+              </Flex>
+            </Checkbox>
           ))}
         </div>
       </Card>

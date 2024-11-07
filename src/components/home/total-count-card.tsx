@@ -1,12 +1,17 @@
 import { Card } from 'antd';
 import React from 'react';
 import { Text } from '../text';
-import { ScheduleOutlined, TeamOutlined } from '@ant-design/icons';
+import {
+  HeartOutlined,
+  ScanOutlined,
+  ScheduleOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
 import { Area, AreaConfig } from '@ant-design/plots';
 import TotalSkeleton from '../skeleton/total';
 
 type Props = {
-  resource: 'customers' | 'events' | 'memberships';
+  resource: 'customers' | 'events' | 'memberships' | 'tickets';
   isLoading: boolean;
   counts: number[];
 };
@@ -53,13 +58,28 @@ const DashboardTotalCountCard = ({ resource, isLoading, counts }: Props) => {
     },
   };
 
+  const renderIcon = () => {
+    switch (resource) {
+      case 'customers':
+        return <TeamOutlined />;
+      case 'events':
+        return <ScheduleOutlined />;
+      case 'memberships':
+        return <HeartOutlined />;
+      case 'tickets':
+        return <ScanOutlined />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       {isLoading ? (
         <TotalSkeleton />
       ) : (
         <Card
-          style={{ height: 90, padding: 0 }}
+          style={{ height: 95, padding: 0 }}
           styles={{ body: { padding: '8px 8px 8px 12px' } }}
           size="small"
         >
@@ -71,7 +91,7 @@ const DashboardTotalCountCard = ({ resource, isLoading, counts }: Props) => {
               whiteSpace: 'nowrap',
             }}
           >
-            {resource == 'customers' ? <TeamOutlined /> : <ScheduleOutlined />}
+            {renderIcon()}
             <Text size="md" style={{ marginLeft: 8 }}>
               {resource.charAt(0).toUpperCase() + resource.slice(1)}
             </Text>

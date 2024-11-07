@@ -1,12 +1,12 @@
-import './create.index.css';
 import { Button, Col, Form, Input, InputNumber, Row, Space } from 'antd';
 import { useForm, Create } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_VENUE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
-import { getBusiness } from 'util/get-business';
+import { useGlobalStore } from 'providers/context/store';
 
 export const CloneVenue = () => {
+  const business = useGlobalStore((state) => state.business);
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -32,7 +32,7 @@ export const CloneVenue = () => {
     onFinish({
       ...values,
       hasSeats: false,
-      businessId: getBusiness().id,
+      businessId: business?.id,
     });
   };
 

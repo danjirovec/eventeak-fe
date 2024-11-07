@@ -10,26 +10,31 @@ export const EVENTS_QUERY = gql`
     events(filter: $filter, sorting: $sorting, paging: $paging) {
       nodes {
         id
-        category
+        template {
+          id
+          type
+          name
+          category
+          description
+          subtitles
+          posterUrl
+          length
+          language
+          venue {
+            id
+            name
+            hasSeats
+          }
+        }
         created
         updated
         name
-        length
-        description
-        posterUrl
-        language
-        subtitles
         date
-        eventTemplate {
-          id
-        }
         business {
-          id
-        }
-        venue {
           id
           name
         }
+        seatMap
       }
       totalCount
     }
@@ -43,6 +48,7 @@ export const EVENT_CHECKOUT_QUERY = gql`
       tickets {
         id
         price
+        validated
         user {
           id
           firstName
@@ -52,19 +58,20 @@ export const EVENT_CHECKOUT_QUERY = gql`
         event {
           id
           name
-          eventTemplate {
-            id
-          }
-          venueData
-          venue {
+          seatMap
+          template {
             id
             name
+            venue {
+              id
+              name
+              hasSeats
+            }
           }
         }
         seat {
           id
-          row
-          seat
+          name
         }
         section {
           id
@@ -75,7 +82,7 @@ export const EVENT_CHECKOUT_QUERY = gql`
           name
         }
       }
-      eventPriceCategories {
+      priceCategories {
         nodes {
           id
           name
@@ -92,13 +99,16 @@ export const EVENT_CHECKOUT_QUERY = gql`
       events {
         id
         name
-        venueData
-        venue {
+        seatMap
+        template {
           id
           name
-          hasSeats
+          venue {
+            id
+            name
+            hasSeats
+          }
         }
-        category
         date
       }
       users {
@@ -128,6 +138,7 @@ export const CUSTOMERS_QUERY = gql`
         user {
           id
           email
+          avatarUrl
           firstName
           lastName
           created
@@ -136,20 +147,6 @@ export const CUSTOMERS_QUERY = gql`
         }
       }
     }
-    # memberships(filter: $filter, paging: $paging) {
-    #   nodes {
-    #     id
-    #     points
-    #     expiryDate
-    #     user {
-    #       id
-    #     }
-    #     membershipType {
-    #       id
-    #       name
-    #     }
-    #   }
-    # }
   }
 `;
 
@@ -160,6 +157,7 @@ export const BUSINESS_METRICS_QUERY = gql`
       customers
       events
       memberships
+      tickets
     }
   }
 `;
@@ -201,6 +199,7 @@ export const SECTIONS_QUERY = gql`
       nodes {
         id
         name
+        capacity
         venue {
           id
           name
@@ -211,13 +210,13 @@ export const SECTIONS_QUERY = gql`
 `;
 
 // Query to get event price categories
-export const EVENT_PRICE_CATEGORY_QUERY = gql`
-  query EventPriceCategoryList(
-    $filter: EventPriceCategoryFilter!
-    $sorting: [EventPriceCategorySort!]
+export const PRICE_CATEGORY_QUERY = gql`
+  query PriceCategoryList(
+    $filter: PriceCategoryFilter!
+    $sorting: [PriceCategorySort!]
     $paging: OffsetPaging!
   ) {
-    eventPriceCategories(filter: $filter, sorting: $sorting, paging: $paging) {
+    priceCategories(filter: $filter, sorting: $sorting, paging: $paging) {
       nodes {
         id
         name
@@ -228,7 +227,12 @@ export const EVENT_PRICE_CATEGORY_QUERY = gql`
           id
           name
         }
+        template {
+          id
+          name
+        }
       }
+      totalCount
     }
   }
 `;
@@ -246,6 +250,10 @@ export const BENEFITS_QUERY = gql`
         name
         description
         points
+        membershipType {
+          id
+          name
+        }
         expiryDate
         created
         business {
@@ -278,6 +286,29 @@ export const DISCOUNTS_QUERY = gql`
   }
 `;
 
+// Query to get template discounts
+export const TEMPLATE_DISCOUNTS_QUERY = gql`
+  query TemplateDiscountsList(
+    $filter: TemplateDiscountFilter!
+    $sorting: [TemplateDiscountSort!]
+    $paging: OffsetPaging!
+  ) {
+    templateDiscounts(filter: $filter, sorting: $sorting, paging: $paging) {
+      nodes {
+        discount {
+          id
+          name
+          percentage
+        }
+        template {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
 // Query to get orders
 export const ORDERS_QUERY = gql`
   query OrdersList(
@@ -291,6 +322,7 @@ export const ORDERS_QUERY = gql`
         total
         user {
           id
+          email
           firstName
           lastName
         }
@@ -300,6 +332,16 @@ export const ORDERS_QUERY = gql`
         created
       }
       totalCount
+    }
+  }
+`;
+
+// Query to get orders graph
+export const ORDERS_GRAPH = gql`
+  query OrdersGraph($meta: String!) {
+    getOrderTotals(meta: $meta) {
+      date
+      total
     }
   }
 `;
@@ -322,6 +364,7 @@ export const TICKETS_QUERY = gql`
         }
         user {
           id
+          email
           firstName
           lastName
         }
@@ -332,8 +375,11 @@ export const TICKETS_QUERY = gql`
         }
         seat {
           id
-          row
-          seat
+          name
+        }
+        row {
+          id
+          name
         }
         section {
           id
@@ -362,6 +408,7 @@ export const BUSINESSES_QUERY = gql`
         name
         apiKey
         logoUrl
+        currency
       }
     }
   }
@@ -381,6 +428,7 @@ export const MEMBERSHIPS_QUERY = gql`
         expiryDate
         user {
           id
+          email
         }
         membershipType {
           id
@@ -405,6 +453,7 @@ export const MEMBERSHIP_TYPE_QUERY = gql`
       nodes {
         id
         name
+        description
       }
     }
   }
@@ -422,9 +471,13 @@ export const USER_BUSINESSES_QUERY = gql`
         business {
           id
           name
+          currency
         }
         user {
           id
+          email
+          firstName
+          lastName
           defaultBusiness {
             id
             name
@@ -438,15 +491,16 @@ export const USER_BUSINESSES_QUERY = gql`
 // Query to get benefits
 export const TEMPLATES_QUERY = gql`
   query TemplatesList(
-    $filter: EventTemplateFilter!
-    $sorting: [EventTemplateSort!]
+    $filter: TemplateFilter!
+    $sorting: [TemplateSort!]
     $paging: OffsetPaging!
   ) {
-    eventTemplates(filter: $filter, sorting: $sorting, paging: $paging) {
+    templates(filter: $filter, sorting: $sorting, paging: $paging) {
       nodes {
         id
         category
         created
+        updated
         name
         length
         type

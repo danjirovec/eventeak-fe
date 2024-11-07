@@ -2,9 +2,12 @@ import { AuthProvider } from '@refinedev/core';
 import dayjs from 'dayjs';
 
 import { supabaseClient } from '../util';
+import { useGlobalStore } from './context/store';
+import { CLIENT_URL } from './data';
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password, providerName }) => {
+    const { setUser } = useGlobalStore.getState();
     // sign in with oauth
     try {
       if (providerName) {
@@ -16,7 +19,7 @@ export const authProvider: AuthProvider = {
           return {
             success: false,
             error: {
-              message: 'Login failed',
+              message: 'Sign in failed',
               name: 'Invalid email or password',
             },
           };
@@ -27,9 +30,9 @@ export const authProvider: AuthProvider = {
             success: true,
             successNotification: {
               message: '',
-              description: 'Login successful',
+              description: 'Sign in successful',
             },
-            redirectTo: '/',
+            redirectTo: '/dashboard',
           };
         }
       }
@@ -44,20 +47,21 @@ export const authProvider: AuthProvider = {
         return {
           success: false,
           error: {
-            message: 'Login failed',
+            message: 'Sign in failed',
             name: 'Invalid email or password',
           },
         };
       }
 
       if (data?.user) {
+        setUser({ accessToken: data.session.access_token, id: data.user.id });
         return {
           success: true,
           successNotification: {
             message: '',
-            description: 'Login successful',
+            description: 'Sign in successful',
           },
-          redirectTo: '/',
+          redirectTo: '/dashboard',
         };
       }
     } catch (error: any) {
@@ -70,7 +74,7 @@ export const authProvider: AuthProvider = {
     return {
       success: false,
       error: {
-        message: 'Login failed',
+        message: 'Sign in failed',
         name: 'Invalid email or password',
       },
     };
@@ -84,7 +88,7 @@ export const authProvider: AuthProvider = {
         email,
         password,
         options: {
-          emailRedirectTo: 'http://localhost:5173/login',
+          emailRedirectTo: `${CLIENT_URL}login`,
           data: {
             firstName: params.firstName,
             lastName: params.lastName,
@@ -104,6 +108,10 @@ export const authProvider: AuthProvider = {
       if (data) {
         return {
           success: true,
+          successNotification: {
+            message: '',
+            description: 'Sign up successful',
+          },
           redirectTo: '/login',
         };
       }
@@ -117,7 +125,7 @@ export const authProvider: AuthProvider = {
     return {
       success: false,
       error: {
-        message: 'Register failed',
+        message: 'Sign up failed',
         name: 'Invalid email or password',
       },
     };
@@ -127,7 +135,7 @@ export const authProvider: AuthProvider = {
       const { data, error } = await supabaseClient.auth.resetPasswordForEmail(
         email,
         {
-          redirectTo: `http://localhost:5173/update-password`,
+          redirectTo: `${CLIENT_URL}update-password`,
         },
       );
 
@@ -141,6 +149,10 @@ export const authProvider: AuthProvider = {
       if (data) {
         return {
           success: true,
+          successNotification: {
+            message: 'Reset link sent',
+            description: 'Check your email inbox',
+          },
         };
       }
     } catch (error: any) {
@@ -153,7 +165,7 @@ export const authProvider: AuthProvider = {
     return {
       success: false,
       error: {
-        message: 'Forgot password failed',
+        message: 'Reset failed',
         name: 'Invalid email',
       },
     };
@@ -174,6 +186,10 @@ export const authProvider: AuthProvider = {
       if (data) {
         return {
           success: true,
+          successNotification: {
+            message: '',
+            description: 'Update password successful',
+          },
           redirectTo: '/login',
         };
       }
@@ -192,6 +208,7 @@ export const authProvider: AuthProvider = {
     };
   },
   logout: async () => {
+    const { setBusiness, setUser } = useGlobalStore.getState();
     const { error } = await supabaseClient.auth.signOut();
 
     if (error) {
@@ -201,21 +218,34 @@ export const authProvider: AuthProvider = {
       };
     }
 
-    sessionStorage.removeItem('business');
+    setUser(null);
+    setBusiness(null);
 
     return {
       success: true,
-      redirectTo: '/',
+      successNotification: {
+        message: '',
+        description: 'Logout successful',
+      },
+      redirectTo: '/login',
     };
   },
   onError: async (error) => {
     console.error(error);
     return { error };
   },
-  check: async () => {
+  check: async (params = null) => {
+    const { setBusiness, business, setUser } = useGlobalStore.getState();
     try {
-      const { data } = await supabaseClient.auth.getSession();
-      const { session } = data;
+      let session = null;
+
+      if (params && params.refresh) {
+        const response = await supabaseClient.auth.refreshSession();
+        session = response.data.session;
+      } else {
+        const response = await supabaseClient.auth.getSession();
+        session = response.data.session;
+      }
 
       if (!session) {
         return {
@@ -229,29 +259,29 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      if (!sessionStorage.getItem('business')) {
+      setUser({ accessToken: session.access_token, id: session.user.id });
+
+      if (!business) {
         const { data: user } = await supabaseClient
           .from('user')
           .select('default_business_id, id')
-          .eq('id', data.session.user.id)
+          .eq('id', session.user.id)
           .limit(1)
           .maybeSingle();
 
         if (user && user.default_business_id) {
           const { data: business } = await supabaseClient
             .from('business')
-            .select('name')
+            .select('currency, name')
             .eq('id', user.default_business_id)
             .limit(1)
             .single();
 
-          sessionStorage.setItem(
-            'business',
-            JSON.stringify({
-              id: user.default_business_id,
-              name: business?.name,
-            }),
-          );
+          setBusiness({
+            name: business?.name,
+            id: user.default_business_id,
+            currency: business?.currency,
+          });
         }
       }
     } catch (error: any) {

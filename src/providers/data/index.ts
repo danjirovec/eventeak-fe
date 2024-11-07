@@ -3,11 +3,11 @@ import * as builder from 'gql-query-builder';
 import { fetchWrapper } from './fetch-wrapper';
 import {
   BaseRecord,
-  CrudFilter,
   CrudOperators,
   CrudSorting,
   DataProvider,
-  LogicalFilter,
+  GetListParams,
+  GetListResponse,
   Pagination,
 } from '@refinedev/core';
 import { singular } from 'pluralize';
@@ -15,10 +15,8 @@ import camelcase from 'camelcase';
 import VariableOptions from 'gql-query-builder/build/VariableOptions';
 import set from 'lodash/set';
 
-export const BASE_API_URL =
-  import.meta.env.VITE_ENVIRONMENT == 'dev'
-    ? import.meta.env.VITE_LOCAL_BASE_API_URL
-    : import.meta.env.VITE_BASE_API_URL;
+export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
+export const CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
 
 export const client = new GraphQLClient(`${BASE_API_URL}graphql`, {
   fetch: (url: string, options: RequestInit) => {
@@ -30,7 +28,10 @@ export const client = new GraphQLClient(`${BASE_API_URL}graphql`, {
   },
 });
 
+export type CustomCrudOperators = CrudOperators | 'is' | 'isNot';
+
 const operatorMap: { [key: string]: string } = {
+  is: 'is',
   eq: 'eq',
   ne: 'neq',
   lt: 'lt',
@@ -41,8 +42,22 @@ const operatorMap: { [key: string]: string } = {
   nin: 'notIn',
 };
 
+export type CustomLogicalFilter = {
+  field: string;
+  operator: Exclude<CustomCrudOperators, 'or' | 'and'>;
+  value: any;
+};
+
+export type CustomConditionalFilter = {
+  key?: string;
+  operator: Extract<CustomCrudOperators, 'or' | 'and'>;
+  value: (CustomLogicalFilter | CustomConditionalFilter)[];
+};
+
+export type CustomCrudFilter = CustomLogicalFilter | CustomConditionalFilter;
+
 const operatorMapper = (
-  operator: CrudOperators,
+  operator: CustomCrudOperators,
   value: any,
 ): { [key: string]: any } => {
   if (operator === 'contains') {
@@ -69,6 +84,10 @@ const operatorMapper = (
     return { notILike: `%${value}` };
   }
 
+  if (operator === 'is') {
+    return { is: value };
+  }
+
   if (operator === 'null') {
     return { is: null };
   }
@@ -92,7 +111,7 @@ const operatorMapper = (
   return { [operatorMap[operator]]: value };
 };
 
-const generateFilters = (filters: LogicalFilter[]) => {
+const generateFilters = (filters: CustomLogicalFilter[]) => {
   const result: { [key: string]: { [key: string]: string | number } } = {};
 
   filters
@@ -103,10 +122,10 @@ const generateFilters = (filters: LogicalFilter[]) => {
 
       return !!f.value;
     })
-    .map((filter: LogicalFilter | CrudFilter) => {
+    .map((filter: CustomLogicalFilter | CustomCrudFilter) => {
       if (filter.operator === 'and' || filter.operator === 'or') {
         return set(result, filter.operator, [
-          generateFilters(filter.value as LogicalFilter[]),
+          generateFilters(filter.value as CustomLogicalFilter[]),
         ]);
       } else if ('field' in filter) {
         return set(
@@ -132,7 +151,6 @@ const generateSorting = (sorters: CrudSorting) => {
 };
 
 const generatePaging = (pagination: Pagination) => {
-  // maximum value of 32 bit signed integer
   if (pagination.mode === 'off') return { limit: 2147483647 };
 
   if (pagination.mode !== 'server') return undefined;
@@ -147,7 +165,17 @@ const generatePaging = (pagination: Pagination) => {
 
 export const defaultDataProvider = graphqlDataProvider(client);
 
-export const dataProvider: DataProvider = {
+export interface CustomGetListParams extends Omit<GetListParams, 'filters'> {
+  filters?: CustomCrudFilter[];
+}
+
+export type CustomDataProvider = Omit<DataProvider, 'getList'> & {
+  getList: <TData extends BaseRecord = BaseRecord>(
+    params: CustomGetListParams,
+  ) => Promise<GetListResponse<TData>>;
+};
+
+export const dataProvider: CustomDataProvider = {
   ...defaultDataProvider,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -167,8 +195,21 @@ export const dataProvider: DataProvider = {
     if (meta?.gqlQuery) {
       query = meta?.gqlQuery;
 
+      filters = filters?.map((filter) => {
+        if (
+          (filter.operator == 'eq' || filter.operator == 'is') &&
+          filter.field == 'validated'
+        ) {
+          filter.operator = 'is';
+          filter.value = Boolean(filter.value);
+        }
+        return filter;
+      });
+
       variables = {
-        filter: filters ? generateFilters(filters as LogicalFilter[]) : {},
+        filter: filters
+          ? generateFilters(filters as CustomLogicalFilter[])
+          : {},
         sorting: sorters ? generateSorting(sorters) : [],
         paging,
         meta: JSON.stringify(meta),
@@ -180,7 +221,7 @@ export const dataProvider: DataProvider = {
             pascalCase: true,
           }),
           required: true,
-          value: generateFilters(filters as LogicalFilter[]),
+          value: generateFilters(filters as CustomLogicalFilter[]),
         };
       }
 
@@ -333,13 +374,10 @@ export const dataProvider: DataProvider = {
     const gqlOperation = meta?.gqlMutation ?? meta?.gqlQuery;
 
     if (gqlOperation) {
-      const response: any = await client.request(
-        gqlOperation,
-        {
-          ...meta?.variables,
-          meta: meta ? meta.meta : undefined,
-        } ?? {},
-      );
+      const response: any = await client.request(gqlOperation, {
+        ...meta?.variables,
+        meta: meta ? meta.meta : undefined,
+      });
 
       return { data: response };
     }

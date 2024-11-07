@@ -1,8 +1,8 @@
 import {
   BuildOutlined,
   CalendarOutlined,
-  CheckOutlined,
   DashboardOutlined,
+  FlagOutlined,
   GiftOutlined,
   HeartOutlined,
   HomeOutlined,
@@ -13,6 +13,7 @@ import {
   ScheduleOutlined,
   ShopOutlined,
   ShoppingCartOutlined,
+  ShoppingOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -21,7 +22,7 @@ import { IResourceItem } from '@refinedev/core';
 export const resources: IResourceItem[] = [
   {
     name: 'dashboard',
-    list: '/',
+    list: '/dashboard',
     meta: {
       label: 'Dashboard',
       icon: <DashboardOutlined />,
@@ -30,7 +31,6 @@ export const resources: IResourceItem[] = [
   {
     name: 'businesses',
     list: '/businesses',
-    clone: 'businesses/clone/:id',
     create: '/businesses/new',
     edit: '/businesses/edit/:id',
     meta: {
@@ -46,6 +46,40 @@ export const resources: IResourceItem[] = [
     },
   },
   {
+    name: 'users',
+    list: '/users',
+    create: '/users/new',
+    edit: '/users/edit/:id',
+    meta: {
+      label: 'Users',
+      icon: <TeamOutlined />,
+      parent: 'userManagement',
+    },
+  },
+  {
+    name: 'membership-types',
+    list: '/membership-types',
+    clone: '/membership-types/clone/:id',
+    create: '/membership-types/new',
+    edit: '/membership-types/edit/:id',
+    meta: {
+      label: 'Membership Types',
+      icon: <FlagOutlined />,
+      parent: 'userManagement',
+    },
+  },
+  {
+    name: 'memberships',
+    list: '/memberships',
+    create: '/memberships/new',
+    edit: '/memberships/edit/:id',
+    meta: {
+      label: 'Memberships',
+      icon: <HeartOutlined />,
+      parent: 'userManagement',
+    },
+  },
+  {
     name: 'benefits',
     list: '/benefits',
     clone: '/benefits/clone/:id',
@@ -58,38 +92,14 @@ export const resources: IResourceItem[] = [
     },
   },
   {
-    name: 'membership-types',
-    list: '/membership-types',
-    clone: '/membership-types/clone/:id',
-    create: '/membership-types/new',
-    edit: '/membership-types/edit/:id',
-    meta: {
-      label: 'Membership Types',
-      icon: <HeartOutlined />,
-      parent: 'userManagement',
-    },
-  },
-  {
-    identifier: 'users',
-    name: 'users',
-    list: '/users',
-    create: '/users/new',
-    edit: '/users/edit/:id',
-    meta: {
-      label: 'Users',
-      icon: <TeamOutlined />,
-      parent: 'userManagement',
-    },
-  },
-  {
     name: 'venues',
     list: '/venues',
-    clone: '/venues/clone/:id',
     create: '/venues/new',
     edit: '/venues/edit/:id',
     meta: {
       label: 'Venues',
       icon: <HomeOutlined />,
+      parent: 'eventManagement',
     },
   },
   {
@@ -100,11 +110,11 @@ export const resources: IResourceItem[] = [
     },
   },
   {
-    name: 'event-templates',
-    list: '/event-templates',
-    clone: '/event-templates/clone/:id',
-    create: '/event-templates/new',
-    edit: '/event-templates/edit/:id',
+    name: 'templates',
+    list: '/templates',
+    clone: '/templates/clone/:id',
+    create: '/templates/new',
+    edit: '/templates/edit/:id',
     meta: {
       label: 'Templates',
       icon: <BuildOutlined />,
@@ -124,18 +134,18 @@ export const resources: IResourceItem[] = [
     },
   },
   {
+    name: 'ticketManagement',
+    meta: {
+      label: 'Ticket',
+      icon: <QrcodeOutlined />,
+    },
+  },
+  {
     name: 'scheduler',
     list: '/scheduler',
     meta: {
       label: 'Scheduler',
       icon: <CalendarOutlined />,
-    },
-  },
-  {
-    name: 'ticketManagement',
-    meta: {
-      label: 'Ticket',
-      icon: <QrcodeOutlined />,
     },
   },
   {
@@ -153,18 +163,16 @@ export const resources: IResourceItem[] = [
   {
     name: 'orders',
     list: '/orders',
-    create: '/orders/new',
     edit: '/orders/edit/:id',
     meta: {
       label: 'Orders',
-      icon: <ShoppingCartOutlined />,
+      icon: <ShoppingOutlined />,
       parent: 'ticketManagement',
     },
   },
   {
     name: 'tickets',
     list: '/tickets',
-    create: '/tickets/new',
     edit: '/tickets/edit/:id',
     meta: {
       label: 'Tickets',

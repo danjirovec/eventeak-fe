@@ -4,7 +4,6 @@
 import { useOne, useParsed } from '@refinedev/core';
 import { fabric } from 'fabric';
 import { useEffect, useRef, useState } from 'react';
-import Swal from 'sweetalert2';
 import THEME from 'util/globals';
 import { v4 as uuidv4 } from 'uuid';
 import { example } from './idk';
@@ -16,7 +15,6 @@ let firstTime = false;
 let canvas = null;
 let json = null;
 const r = 7;
-const removed = false;
 const eventData = example;
 let startPointer = null;
 let isDragging = false;
@@ -30,7 +28,6 @@ export const Map = () => {
   const canvasDivRef = useRef(null);
   const [tickets, setTickets] = useState([]);
   const { params } = useParsed<params>();
-  const [localTickets, setLocalTickets] = useState([]);
   const eventId = params?.eventId;
 
   const { data, isLoading } = useOne({

@@ -62,14 +62,17 @@ import {
   Checkout,
   CloneEvent,
   Map,
+  EditMembership,
+  CreateMembership,
+  MembershipList,
 } from './pages';
 import Layout from './components/layout';
 import { resources } from './config/resources';
-import { SharedProvider } from './providers/context/business';
 import './index.css';
 import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
-import DevProtect from './providers/dev.auth';
+import AuthRefresh from './providers/context/authRefresh';
+import Conditions from './pages/conditions/conditions';
 
 function App() {
   dayjs.extend(updateLocale);
@@ -77,7 +80,6 @@ function App() {
     weekStart: 1,
   });
   return (
-    // <DevProtect>
     <BrowserRouter>
       <RefineKbarProvider>
         <ConfigProvider
@@ -87,7 +89,9 @@ function App() {
               borderRadius: 5,
               colorSuccess: '#007965',
               colorError: '#AD001D',
-              colorBgLayout: '#f1f4f3', // #f0f2f2
+              colorBgLayout: '#f1f4f3',
+              colorTextBase: '#1d1d1d',
+              colorLink: '#007965',
             },
             algorithm: [theme.defaultAlgorithm],
             components: {
@@ -97,18 +101,34 @@ function App() {
               Menu: {
                 itemSelectedBg: '#cce4e0',
                 itemHoverBg: '#cce4e0',
-                itemSelectedColor: '#001814',
-                itemColor: '#001814',
+                itemSelectedColor: '#1d1d1d',
+                itemColor: '#1d1d1d',
               },
               Table: {
                 headerBg: '#cce4e0',
               },
               Select: {
                 optionSelectedBg: '#cce4e0',
+                colorBgContainerDisabled: 'white',
+                colorTextDisabled: '#1d1d1d',
               },
               Button: {
                 textHoverBg: '#cce4e0',
                 primaryShadow: undefined,
+                opacityLoading: 100,
+                dangerShadow: undefined,
+              },
+              Input: {
+                addonBg: 'white',
+                colorBgContainerDisabled: 'white',
+                colorTextDisabled: '#1d1d1d',
+              },
+              Upload: {
+                colorBgContainerDisabled: 'white',
+                colorTextDisabled: '#1d1d1d',
+              },
+              Collapse: {
+                headerBg: 'white',
               },
             },
           }}
@@ -130,20 +150,33 @@ function App() {
             >
               <Routes>
                 <Route
+                  path="/"
+                  element={
+                    <Authenticated
+                      key="root-route"
+                      fallback={<Navigate to="/login" />}
+                    >
+                      <Navigate to="/dashboard" />
+                    </Authenticated>
+                  }
+                />
+                <Route
                   element={
                     <Authenticated
                       key="authenticated-routes"
                       fallback={<CatchAllNavigate to="/login" />}
                     >
-                      <SharedProvider>
+                      <AuthRefresh>
                         <Layout>
                           <Outlet />
                         </Layout>
-                      </SharedProvider>
+                      </AuthRefresh>
                     </Authenticated>
                   }
                 >
-                  <Route index element={<Home />} />
+                  <Route path="/dashboard">
+                    <Route index element={<Home />} />
+                  </Route>
                   <Route path="/users">
                     <Route index element={<CustomerList />} />
                     <Route path="new" element={<CreateCustomer />} />
@@ -155,7 +188,7 @@ function App() {
                     <Route path="clone/:id" element={<CloneEvent />} />
                     <Route path="edit/:id" element={<EditEvent />} />
                   </Route>
-                  <Route path="/event-templates">
+                  <Route path="/templates">
                     <Route index element={<TemplateList />} />
                     <Route path="new" element={<CreateTemplate />} />
                     <Route path="clone/:id" element={<CloneTemplate />} />
@@ -196,6 +229,11 @@ function App() {
                     <Route path="clone/:id" element={<CloneMembershipType />} />
                     <Route path="edit/:id" element={<EditMembershipType />} />
                   </Route>
+                  <Route path="/memberships">
+                    <Route index element={<MembershipList />} />
+                    <Route path="new" element={<CreateMembership />} />
+                    <Route path="edit/:id" element={<EditMembership />} />
+                  </Route>
                   <Route path="/orders">
                     <Route index element={<OrderList />} />
                     <Route path="edit/:id" element={<EditOrder />} />
@@ -207,7 +245,7 @@ function App() {
                 <Route
                   element={
                     <Authenticated key="auth-pages" fallback={<Outlet />}>
-                      <Navigate to="/" />
+                      <Navigate to="/dashboard" />
                     </Authenticated>
                   }
                 >
@@ -235,6 +273,7 @@ function App() {
                   />
                 </Route>
 
+                <Route path="/conditions" element={<Conditions />} />
                 <Route path="/map" element={<Map />} />
 
                 <Route
@@ -254,7 +293,6 @@ function App() {
         </ConfigProvider>
       </RefineKbarProvider>
     </BrowserRouter>
-    // </DevProtect>
   );
 }
 

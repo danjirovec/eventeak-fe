@@ -1,40 +1,25 @@
 import React from 'react';
-
-import { useList } from '@refinedev/core';
-import type { GetFieldsFromList } from '@refinedev/nestjs-query';
-
 import { DollarOutlined } from '@ant-design/icons';
 import { Area, type AreaConfig } from '@ant-design/plots';
 import { Card } from 'antd';
-
 import { Text } from '../text';
-import { ORDERS_QUERY } from 'graphql/queries';
-import { OrdersListQuery } from 'graphql/types';
-import { getBusiness } from 'util/get-business';
+import RevenueSkeleton from '../skeleton/revenue';
 
-const RevenueChart = () => {
-  const { data } = useList<GetFieldsFromList<OrdersListQuery>>({
-    resource: 'orders',
-    filters: [
-      {
-        field: 'businessId',
-        operator: 'eq',
-        value: getBusiness().id,
-      },
-    ],
-    meta: {
-      gqlQuery: ORDERS_QUERY,
-    },
-  });
-
+const RevenueChart = ({
+  data,
+  isLoading,
+}: {
+  data: any;
+  isLoading: boolean;
+}) => {
   const dealData = React.useMemo(() => {
-    return data?.data;
-  }, [data?.data]);
+    return data?.data?.getOrderTotals;
+  }, [data?.data?.getOrderTotals]);
 
   const config: AreaConfig = {
     isStack: false,
     data: dealData ? dealData : [],
-    xField: 'created',
+    xField: 'date',
     yField: 'total',
     animation: true,
     startOnZero: false,
@@ -42,6 +27,7 @@ const RevenueChart = () => {
     legend: {
       offsetY: -6,
     },
+    color: '#f58634',
     yAxis: {
       tickCount: 4,
       label: {
@@ -53,18 +39,19 @@ const RevenueChart = () => {
     tooltip: {
       formatter: (data) => {
         return {
-          name: data.total,
-          value: `CZK ${Number(data.total) / 1000}k`,
+          name: 'Month total',
+          value: `${Number(data.total)} CZK`,
         };
       },
+      crosshairs: { type: 'xy' },
     },
-    areaStyle: (data) => {
-      const won = 'l(270) 0:#007965 0.5:#007965 1:#007965';
-      // const lost = 'l(270) 0:#ffffff 0.5:#f3b7c2 1:#ff4d4f';
-      return { fill: won };
+    areaStyle: () => {
+      return {
+        fill: `l(270) 0:#fff 0.2:#007965 1:#001814`,
+      };
     },
-    color: (data) => {
-      return '#007965';
+    line: {
+      color: '#007965',
     },
   };
 
@@ -90,7 +77,7 @@ const RevenueChart = () => {
         </div>
       }
     >
-      <Area {...config} height={325} />
+      {isLoading ? <RevenueSkeleton /> : <Area {...config} height={325} />}
     </Card>
   );
 };

@@ -2,49 +2,59 @@ import React, { useEffect, useState } from 'react';
 import {
   Button,
   Col,
+  Collapse,
   DatePicker,
-  Divider,
+  Flex,
   Form,
   Input,
-  InputNumber,
   Row,
   Select,
   Space,
 } from 'antd';
-import {
-  Edit,
-  ListButton,
-  RefreshButton,
-  useForm,
-  useSelect,
-} from '@refinedev/antd';
-import { useGo, useList, useMany, useNavigation } from '@refinedev/core';
+import { Edit, ListButton, RefreshButton, useForm } from '@refinedev/antd';
+import { useGo, useList, useNavigation } from '@refinedev/core';
 import { UPDATE_EVENT_MUTATION } from 'graphql/mutations';
 import {
-  EVENT_PRICE_CATEGORY_QUERY,
-  TEMPLATES_QUERY,
-  VENUES_QUERY,
+  PRICE_CATEGORY_QUERY,
+  TEMPLATE_DISCOUNTS_QUERY,
 } from 'graphql/queries';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import {
-  EventPriceCategoryListQuery,
-  TemplatesListQuery,
-  VenuesListQuery,
+  PriceCategoryListQuery,
+  TemplateDiscountsListQuery,
 } from 'graphql/types';
-import { requiredOptionalMark } from 'components/requiredMark';
-import { languageOptions, categoryOptions } from 'enum/enum';
-import { EllipsisOutlined, StopOutlined } from '@ant-design/icons';
+import { requiredMark } from 'components/requiredMark';
+import {
+  CaretRightOutlined,
+  ShoppingCartOutlined,
+  DollarTwoTone,
+  FileTextTwoTone,
+  HomeTwoTone,
+  HourglassTwoTone,
+  MessageTwoTone,
+  MinusCircleTwoTone,
+  PictureTwoTone,
+  SoundTwoTone,
+  TagTwoTone,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getBusiness } from 'util/get-business';
 import SupaUpload from 'components/upload/supaUpload';
-import { uploadEdit } from 'components/upload/util';
 import { Text } from 'components';
+import { useGlobalStore } from 'providers/context/store';
+import LogoPreviewSkeleton from 'components/skeleton/logo-preview';
+
+type Selected = {
+  label: string;
+  value: string;
+};
 
 export const EditEvent = () => {
-  const [formData, setFormData] = useState<FormData | null>(new FormData());
-  const [editDisabled, setEditDisabled] = useState(false);
-  const [templateId, setTemplateId] = useState<string | null>(null);
-  const { replace } = useNavigation();
+  const business = useGlobalStore((state) => state.business);
+  const [templatePriceCategories, setTemplatePriceCategories] = useState<
+    Selected[]
+  >([]);
+  const [discounts, setDiscounts] = useState<Selected[]>([]);
+  const { replace, edit } = useNavigation();
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -53,6 +63,7 @@ export const EditEvent = () => {
       type: 'replace',
     });
   };
+
   const { formProps, formLoading, onFinish, saveButtonProps, form, id } =
     useForm({
       action: 'edit',
@@ -66,72 +77,15 @@ export const EditEvent = () => {
       },
       submitOnEnter: true,
     });
-  const { TextArea } = Input;
 
-  const { selectProps, query } = useSelect<GetFieldsFromList<VenuesListQuery>>({
-    resource: 'venues',
-    optionLabel: 'name',
-    optionValue: 'id',
-    meta: {
-      gqlQuery: VENUES_QUERY,
-    },
-    pagination: {
-      pageSize: 20,
-      mode: 'server',
-    },
-    filters: [
-      {
-        field: 'business.id',
-        operator: 'eq',
-        value: getBusiness().id,
-      },
-    ],
-    sorters: [
-      {
-        field: 'created',
-        order: 'desc',
-      },
-    ],
-  });
+  const template = formProps.initialValues?.template;
 
-  const { selectProps: templateSelectProps, query: templateQueryResult } =
-    useSelect<GetFieldsFromList<TemplatesListQuery>>({
-      resource: 'event-templates',
-      optionLabel: 'name',
-      optionValue: 'id',
-      meta: {
-        gqlQuery: TEMPLATES_QUERY,
-      },
-      pagination: {
-        pageSize: 20,
-        mode: 'server',
-      },
-      filters: [
-        {
-          field: 'business.id',
-          operator: 'eq',
-          value: getBusiness().id,
-        },
-        {
-          field: 'type',
-          operator: 'eq',
-          value: 'Child',
-        },
-      ],
-      sorters: [
-        {
-          field: 'created',
-          order: 'desc',
-        },
-      ],
-    });
-
-  const { data, isLoading } = useList<
-    GetFieldsFromList<EventPriceCategoryListQuery>
+  const { data: priceCategories, isLoading: pricesLoading } = useList<
+    GetFieldsFromList<PriceCategoryListQuery>
   >({
-    resource: 'eventPriceCategories',
+    resource: 'priceCategories',
     meta: {
-      gqlQuery: EVENT_PRICE_CATEGORY_QUERY,
+      gqlQuery: PRICE_CATEGORY_QUERY,
     },
     pagination: {
       pageSize: 20,
@@ -139,9 +93,9 @@ export const EditEvent = () => {
     },
     filters: [
       {
-        field: 'eventTemplate.id',
+        field: 'template.id',
         operator: 'eq',
-        value: formProps.initialValues?.eventTemplate.id,
+        value: template?.id,
       },
     ],
     sorters: [
@@ -151,36 +105,65 @@ export const EditEvent = () => {
       },
     ],
     queryOptions: {
-      enabled: formProps.initialValues?.eventTemplate.id ? true : false,
+      enabled: !!template,
     },
   });
 
-  useEffect(() => {
-    if (data?.data) {
-      const updatedData = data.data.map((item: any) => ({
-        ...item,
-        section: item.section
-          ? { value: item.section.id, name: item.section.name }
-          : null,
-      }));
-      form.setFieldsValue({
-        eventPriceCategory: updatedData,
-      });
-    }
-  }, [data, form]);
+  const { data: templateDiscounts, isLoading: templateDiscountsLoading } =
+    useList<GetFieldsFromList<TemplateDiscountsListQuery>>({
+      resource: 'templateDiscounts',
+      meta: {
+        gqlQuery: TEMPLATE_DISCOUNTS_QUERY,
+      },
+      pagination: {
+        pageSize: 20,
+        mode: 'server',
+      },
+      filters: [
+        {
+          field: 'template.id',
+          operator: 'eq',
+          value: template?.id,
+        },
+      ],
+      sorters: [
+        {
+          field: 'created',
+          order: 'desc',
+        },
+      ],
+      queryOptions: {
+        enabled: !!template,
+      },
+    });
 
-  const handleUpload = (formData: FormData | null) => {
-    setFormData(formData);
-  };
+  useEffect(() => {
+    if (!pricesLoading) {
+      const updated = priceCategories?.data.map((item: any) => ({
+        label: `${item.name} - ${item.price} ${business?.currency}`,
+        value: item.id,
+      }));
+      if (updated) {
+        setTemplatePriceCategories(updated);
+      }
+    }
+  }, [pricesLoading, template]);
+
+  useEffect(() => {
+    if (!templateDiscountsLoading) {
+      const updated = templateDiscounts?.data.map((item: any) => ({
+        label: `${item.discount.name} - ${item.discount.percentage} %`,
+        value: item.discount.id,
+      }));
+      if (updated) {
+        setDiscounts(updated);
+      }
+    }
+  }, [templateDiscountsLoading, template]);
 
   const handleOnFinish = async (values: any) => {
-    const { venueId, eventTemplateId, ...rest } = values;
-    const prev = formProps.initialValues?.posterUrl;
-    const posterUrl = await uploadEdit('posters', formData, prev);
-
     onFinish({
-      ...rest,
-      posterUrl: posterUrl,
+      ...values,
     });
   };
 
@@ -196,149 +179,39 @@ export const EditEvent = () => {
           goBack={<Button>←</Button>}
           breadcrumb={false}
           headerProps={{ onBack: goToListPage }}
-          headerButtons={({ listButtonProps, refreshButtonProps }) => (
+          headerButtons={({ listButtonProps }) => (
             <>
               <Button
                 onClick={() => replace(`/checkout?eventId=${id}`)}
                 type="primary"
+                icon={<ShoppingCartOutlined />}
               >
                 Checkout
               </Button>
               {listButtonProps && <ListButton {...listButtonProps} />}
-              <RefreshButton {...refreshButtonProps} />
             </>
           )}
         >
           <Form
             {...formProps}
-            variant="filled"
+            form={form}
             layout="vertical"
             onFinish={handleOnFinish}
-            requiredMark={requiredOptionalMark}
+            requiredMark={requiredMark}
           >
-            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              <Form.Item
-                label="Template"
-                name="eventTemplateId"
-                rules={[{ required: true, message: '' }]}
-                initialValue={formProps.initialValues?.eventTemplate.id}
-              >
-                <Select
-                  disabled
-                  allowClear={true}
-                  placeholder="Template"
-                  {...templateSelectProps}
-                  options={templateQueryResult.data?.data.map((template) => ({
-                    value: template.id,
-                    label: template.name,
-                  }))}
-                  onSelect={() => setEditDisabled(false)}
-                  onClear={() => {
-                    const nullFields = Object.keys(
-                      form.getFieldsValue(),
-                    ).reduce(
-                      (acc, key) => {
-                        (acc as any)[key] = null;
-                        return acc;
-                      },
-                      {} as { [key: string]: any },
-                    );
-
-                    form.setFieldsValue(nullFields);
-                    setEditDisabled(true);
-                  }}
-                  onChange={() => {
-                    const id = form.getFieldValue('eventTemplateId');
-                    setTemplateId(id);
-                    const template = templateQueryResult.data?.data.filter(
-                      (template) => template.id == id,
-                    )[0];
-                    form.setFieldsValue({ ...template });
-                    form.setFieldValue(
-                      'venueId',
-                      template ? template.venue.id : null,
-                    );
-                  }}
-                />
-              </Form.Item>
-            </Space>
-            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+            <Space
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+              }}
+            >
               <Form.Item
                 label="Name"
                 name="name"
                 rules={[{ required: true, message: '' }]}
               >
-                <Input disabled={editDisabled} placeholder="Name" />
+                <Input placeholder="Name" />
               </Form.Item>
-              <Form.Item
-                label="Venue"
-                name="venueId"
-                rules={[{ required: true, message: '' }]}
-                initialValue={formProps.initialValues?.venue.id}
-              >
-                <Select
-                  allowClear={true}
-                  disabled={true}
-                  placeholder="Venue"
-                  {...selectProps}
-                  options={query.data?.data.map((venue) => ({
-                    value: venue.id,
-                    label: venue.name,
-                  }))}
-                />
-              </Form.Item>
-            </Space>
-            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              <Form.Item
-                label="Category"
-                name="category"
-                rules={[{ required: true, message: '' }]}
-              >
-                <Select
-                  allowClear={true}
-                  placeholder="Category"
-                  options={categoryOptions}
-                  disabled={editDisabled}
-                />
-              </Form.Item>
-              <Form.Item
-                label="Length"
-                name="length"
-                rules={[{ required: true, message: '' }]}
-              >
-                <InputNumber
-                  disabled={editDisabled}
-                  min={0}
-                  style={{ display: 'grid', gridTemplateColumns: '1fr' }}
-                  placeholder="Length"
-                  addonAfter="minutes"
-                />
-              </Form.Item>
-            </Space>
-            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              <Form.Item
-                label="Language"
-                name="language"
-                rules={[{ required: true, message: '' }]}
-              >
-                <Select
-                  allowClear={true}
-                  placeholder="Language"
-                  options={languageOptions}
-                  disabled={editDisabled}
-                />
-              </Form.Item>
-              <Form.Item label="Subtitles" name="subtitles">
-                <Select
-                  allowClear={true}
-                  placeholder="Subtitles"
-                  options={languageOptions}
-                  disabled={editDisabled}
-                />
-              </Form.Item>
-            </Space>
-
-            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
               <Form.Item
                 label="Date - Time"
                 name="date"
@@ -348,7 +221,7 @@ export const EditEvent = () => {
                 })}
               >
                 <DatePicker
-                  disabled={editDisabled}
+                  minDate={dayjs()}
                   showTime
                   showNow={false}
                   format="D. M. YYYY - H:mm"
@@ -362,129 +235,256 @@ export const EditEvent = () => {
                 />
               </Form.Item>
             </Space>
-            <Form.Item
-              label="Description"
-              name="description"
-              rules={[{ required: true, message: '' }]}
+            <Space
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+              }}
             >
-              <TextArea
-                placeholder="Description"
-                disabled={editDisabled}
-              ></TextArea>
-            </Form.Item>
-            <Form.Item name="posterUrl" label="Poster">
-              <SupaUpload
-                disabled={editDisabled}
-                folder="posters"
-                incomingUrl={formProps.initialValues?.posterUrl}
-                onUpload={handleUpload}
+              <Text>{'Template Properties'}</Text>
+              <Collapse
+                collapsible={'header'}
+                expandIcon={({ isActive }) => (
+                  <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                )}
+                size="small"
+                items={[
+                  {
+                    styles: {
+                      header: { height: 30, padding: 4 },
+                    },
+                    label: template?.name,
+                    key: '1',
+                    children: (
+                      <>
+                        <Space
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                          }}
+                        >
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <TagTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Category'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Input
+                              disabled
+                              value={template?.category ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                            />
+                          </Form.Item>
+                        </Space>
+                        <Space
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                          }}
+                        >
+                          <Form.Item
+                            label={
+                              <Flex
+                                onClick={() =>
+                                  edit('venues', template.venue.id)
+                                }
+                                align="center"
+                                gap={5}
+                              >
+                                <HomeTwoTone twoToneColor={'#007965'} />
+                                <Text
+                                  style={{
+                                    whiteSpace: 'nowrap',
+                                    color: '#007965',
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                  }}
+                                >
+                                  {'Venue'}
+                                </Text>
+                              </Flex>
+                            }
+                          >
+                            <Input
+                              disabled
+                              value={template?.venue?.name ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <HourglassTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Length'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Input
+                              value={template?.length ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                              addonAfter="minutes"
+                              disabled
+                            />
+                          </Form.Item>
+                        </Space>
+                        <Space
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                          }}
+                        >
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <SoundTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Language'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Input
+                              disabled
+                              value={template?.language ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <MessageTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Subtitles'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Input
+                              disabled
+                              value={template?.subtitles ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                            />
+                          </Form.Item>
+                        </Space>
+                        <Space
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr',
+                          }}
+                        >
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <FileTextTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Description'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Input.TextArea
+                              disabled
+                              value={template?.description ?? ''}
+                              style={{
+                                backgroundColor: 'white',
+                                color: '#1d1d1d',
+                              }}
+                            />
+                          </Form.Item>
+                        </Space>
+                        <Space
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                          }}
+                        >
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <DollarTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Price categories'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Select
+                              suffixIcon={null}
+                              disabled
+                              placement="topLeft"
+                              mode="multiple"
+                              value={templatePriceCategories}
+                              options={templatePriceCategories}
+                              placeholder="Price categories"
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            label={
+                              <Flex align="center" gap={5}>
+                                <MinusCircleTwoTone twoToneColor={'#007965'} />
+                                <Text>{'Discounts'}</Text>
+                              </Flex>
+                            }
+                          >
+                            <Select
+                              suffixIcon={null}
+                              disabled
+                              placement="topLeft"
+                              mode="multiple"
+                              value={discounts}
+                              options={discounts}
+                              placeholder="Discounts"
+                            />
+                          </Form.Item>
+                        </Space>
+                        <Form.Item
+                          label={
+                            <Flex align="center" gap={5}>
+                              <PictureTwoTone twoToneColor={'#007965'} />
+                              <Text>{'Poster'}</Text>
+                            </Flex>
+                          }
+                        >
+                          {template?.posterUrl ? (
+                            <SupaUpload
+                              folder="posters"
+                              disabled={true}
+                              incomingUrl={template.posterUrl}
+                              onUpload={() => null}
+                            />
+                          ) : (
+                            <Flex
+                              vertical
+                              gap={10}
+                              justify="center"
+                              align="center"
+                              style={{
+                                border: '1px solid #d9d9d9',
+                                borderRadius: '5px',
+                                width: 102,
+                                height: 102,
+                              }}
+                            >
+                              <LogoPreviewSkeleton />
+                            </Flex>
+                          )}
+                        </Form.Item>
+                      </>
+                    ),
+                  },
+                ]}
               />
-            </Form.Item>
+            </Space>
           </Form>
-          <h4 style={{ fontWeight: 600, lineHeight: 1.4, fontSize: 20 }}>
-            Price Categories
-          </h4>
-          {!editDisabled && !isLoading && !formLoading ? (
-            data?.data.map((item, index) => (
-              <React.Fragment key={index}>
-                <Space
-                  style={{
-                    display: 'flex',
-                    columnGap: 50,
-                    backgroundColor: '#f5f5f5',
-                    padding: 10,
-                    borderRadius: 5,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <Space
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Text>Name</Text>
-                    <Space>
-                      <Text style={{ fontWeight: 600 }}>{item.name}</Text>
-                    </Space>
-                  </Space>
-                  <Space
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Text>Price</Text>
-                    <Space>
-                      <Text style={{ fontWeight: 600 }}>{item.price}</Text>
-                    </Space>
-                  </Space>
-                  <Space
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Text>Section</Text>
-                    <Space>
-                      <Text style={{ fontWeight: 600 }}>
-                        {item.section.name}
-                      </Text>
-                    </Space>
-                  </Space>
-                  <Space
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Text>Start Date</Text>
-                    <Space>
-                      <Text style={{ fontWeight: 600 }}>
-                        {item.startDate
-                          ? dayjs(item.startDate).format('D. M. YYYY')
-                          : null}
-                      </Text>
-                    </Space>
-                  </Space>
-                  <Space
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Text>End Date</Text>
-                    <Space>
-                      <Text style={{ fontWeight: 600 }}>
-                        {item.endDate
-                          ? dayjs(item.endDate).format('D. M. YYYY')
-                          : null}
-                      </Text>
-                    </Space>
-                  </Space>
-                </Space>
-
-                <Divider
-                  style={{ marginTop: 5 }}
-                  children={<EllipsisOutlined />}
-                />
-              </React.Fragment>
-            ))
-          ) : (
-            <Button
-              style={{ color: '#bbbbbb' }}
-              type="dashed"
-              block
-              icon={<StopOutlined />}
-            >
-              No data available
-            </Button>
-          )}
         </Edit>
       </Col>
     </Row>

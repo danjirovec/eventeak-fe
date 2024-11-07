@@ -1,25 +1,31 @@
 import type { Dispatch, FC, RefObject, SetStateAction } from 'react';
-
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-
 import type { Event } from 'graphql/schema.types';
 import React, { useState } from 'react';
-import { shortenString } from 'util/string-shortener';
-import { Button, DatePicker, Form, Input, Modal, Select, Space } from 'antd';
+import {
+  Button,
+  DatePicker,
+  Flex,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+} from 'antd';
 import { useForm, useSelect } from '@refinedev/antd';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { TemplatesListQuery } from 'graphql/types';
 import { TEMPLATES_QUERY } from 'graphql/queries';
-import { getBusiness } from 'util/get-business';
 import { requiredOptionalMark } from '../requiredMark';
 import { CREATE_EVENT_MUTATION } from 'graphql/mutations';
 import dayjs from 'dayjs';
 import './index.module.css';
-import { uploadCreate } from '../upload/util';
+import { useGlobalStore } from 'providers/context/store';
+import { Text } from '../text';
 
 type FullCalendarWrapperProps = {
   calendarRef: RefObject<FullCalendar>;
@@ -30,16 +36,29 @@ type FullCalendarWrapperProps = {
 
 const renderEventContent = (eventInfo: any) => {
   return (
-    <React.Fragment>
-      <div style={{ display: 'flex' }}>
-        <p style={{ marginRight: 5 }}>{eventInfo.timeText}</p>
-        <b>
-          {['timeGridWeek', 'dayGridMonth'].includes(eventInfo.view.type)
-            ? shortenString(10, eventInfo.event.title)
-            : eventInfo.event.title}
-        </b>
-      </div>
-    </React.Fragment>
+    <Flex wrap="nowrap" align="center" style={{ overflow: 'hidden' }}>
+      <Text
+        style={{
+          margin: 0,
+          marginRight: 5,
+          whiteSpace: 'nowrap',
+          color: eventInfo.textColor,
+        }}
+      >
+        {eventInfo.timeText}
+      </Text>
+      <Text
+        style={{
+          fontWeight: 700,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          color: eventInfo.textColor,
+        }}
+      >
+        {eventInfo.event.title}
+      </Text>
+    </Flex>
   );
 };
 
@@ -49,18 +68,13 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
   onClickEvent,
   setTitle,
 }) => {
+  const business = useGlobalStore((state) => state.business);
   const [open, setOpen] = useState(false);
   const [modalContent, setModalContent] = useState<string | undefined>(
     undefined,
   );
 
-  const {
-    formProps,
-    onFinish,
-    form,
-    formLoading,
-    mutation: { isLoading },
-  } = useForm({
+  const { formProps, onFinish, form, formLoading } = useForm({
     action: 'create',
     resource: 'events',
     redirect: false,
@@ -72,37 +86,41 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
     submitOnEnter: true,
   });
 
-  const { selectProps: templateSelectProps, queryResult: templateQueryResult } =
-    useSelect<GetFieldsFromList<TemplatesListQuery>>({
-      resource: 'event-templates',
-      optionLabel: 'name',
-      optionValue: 'id',
-      meta: {
-        gqlQuery: TEMPLATES_QUERY,
+  const { selectProps: templates, query: templatesQuery } = useSelect<
+    GetFieldsFromList<TemplatesListQuery>
+  >({
+    resource: 'templates',
+    optionLabel: 'name',
+    optionValue: 'id',
+    meta: {
+      gqlQuery: TEMPLATES_QUERY,
+    },
+    pagination: {
+      pageSize: 50,
+      mode: 'server',
+    },
+    filters: [
+      {
+        field: 'business.id',
+        operator: 'eq',
+        value: business?.id,
       },
-      pagination: {
-        pageSize: 20,
-        mode: 'server',
+      {
+        field: 'type',
+        operator: 'eq',
+        value: 'Leaf',
       },
-      filters: [
-        {
-          field: 'business.id',
-          operator: 'eq',
-          value: getBusiness().id,
-        },
-        {
-          field: 'type',
-          operator: 'eq',
-          value: 'Child',
-        },
-      ],
-      sorters: [
-        {
-          field: 'created',
-          order: 'desc',
-        },
-      ],
-    });
+    ],
+    sorters: [
+      {
+        field: 'created',
+        order: 'desc',
+      },
+    ],
+    queryOptions: {
+      enabled: !!business,
+    },
+  });
 
   const showModal = (info: any) => {
     setModalContent(info.startStr);
@@ -110,21 +128,16 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
   };
 
   const handleOk = async () => {
-    await form.validateFields();
+    const valid = await form.validateFields().catch(() => {
+      return;
+    });
+    if (!valid) {
+      return;
+    }
     const templateId = form.getFieldValue('template');
-    const temp = templateQueryResult.data?.data.filter(
-      (template) => template.id == templateId,
-    )[0];
-    const { business, venue, id, type, created, posterUrl, ...event } = {
-      ...temp,
-    };
-    const poster = await uploadCreate('posters', new FormData(), posterUrl);
     onFinish({
-      ...event,
-      posterUrl: poster,
-      eventTemplateId: id,
+      templateId: templateId,
       businessId: business?.id,
-      venueId: venue?.id,
       name: form.getFieldValue('name'),
       date: form.getFieldValue('date').toDate(),
     });
@@ -143,14 +156,14 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
         destroyOnClose
         centered
         open={open}
-        title="Create event"
+        title="Create Event"
         onOk={handleOk}
         onCancel={handleCancel}
         footer={[
           <Button
             key="submit"
             type="primary"
-            loading={isLoading}
+            loading={formLoading}
             onClick={handleOk}
           >
             Create
@@ -171,15 +184,12 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
               <Select
                 allowClear={true}
                 placeholder="Template"
-                {...templateSelectProps}
-                options={templateQueryResult.data?.data.map((template) => ({
-                  value: template.id,
-                  label: template.name,
-                }))}
+                {...templates}
+                options={templates.options}
                 onSelect={(id) => {
-                  const temp = templateQueryResult.data?.data.filter(
+                  const temp = templatesQuery.data?.data.find(
                     (template) => template.id == String(id),
-                  )[0];
+                  );
                   form.setFieldValue('name', temp?.name);
                 }}
               />
@@ -205,6 +215,8 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
               })}
             >
               <DatePicker
+                minDate={dayjs()}
+                showNow={false}
                 showTime
                 onChange={() => setModalContent(undefined)}
                 format="D. M. YYYY - H:mm"
@@ -225,6 +237,7 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
         initialView={'timeGridWeek'}
         selectable={true}
+        expandRows={true}
         unselectAuto={true}
         select={showModal}
         firstDay={1}
@@ -232,8 +245,12 @@ const FullCalendarWrapper: FC<FullCalendarWrapperProps> = ({
           const { start, end } = selectInfo;
           return end.getTime() - start.getTime() === 1800000;
         }}
+        selectConstraint={{
+          start: new Date().toISOString(),
+          end: undefined,
+        }}
         events={events}
-        eventTextColor="black"
+        eventTextColor="#1d1d1d"
         displayEventEnd={false}
         eventContent={renderEventContent}
         eventDisplay="block"

@@ -1,11 +1,12 @@
-import './create.index.css';
 import {
   Button,
   Col,
+  Flex,
   Form,
   Input,
   InputNumber,
   Row,
+  Select,
   Space,
   Switch,
 } from 'antd';
@@ -15,22 +16,31 @@ import { CREATE_VENUE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import Designer from 'components/seats/designer';
 import React, { useRef, useState } from 'react';
-import {
-  CheckOutlined,
-  CloseOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
-import { getBusiness } from 'util/get-business';
-import { Text } from 'components';
+import { CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { useGlobalStore } from 'providers/context/store';
+import { v4 } from 'uuid';
 
-interface ChildComponentData {
+interface SeatMapData {
   getData: () => object;
 }
 
+type KeyValueObject = {
+  [key: string]: string | Date | number;
+};
+
+type SelectedSection = {
+  label: string;
+  value: string;
+  fields: KeyValueObject;
+};
+
 export const CreateVenue = () => {
-  const actionRef = useRef<ChildComponentData | null>(null);
+  const business = useGlobalStore((state) => state.business);
+  const actionRef = useRef<SeatMapData | null>(null);
   const [hasSeats, setHasSeats] = useState(true);
+  const [selectedSections, setSelectedSections] = useState<SelectedSection[]>(
+    [],
+  );
 
   const go = useGo();
   const goToListPage = () => {
@@ -41,12 +51,11 @@ export const CreateVenue = () => {
     });
   };
 
-  const { formProps, onFinish, saveButtonProps } = useForm({
+  const { formProps, formLoading, onFinish, saveButtonProps, form } = useForm({
     action: 'create',
     resource: 'venues',
-    redirect: false,
+    redirect: 'list',
     mutationMode: 'pessimistic',
-    onMutationSuccess: goToListPage,
     meta: {
       customType: true,
       gqlMutation: CREATE_VENUE_MUTATION,
@@ -55,26 +64,56 @@ export const CreateVenue = () => {
   });
 
   const handleOnFinish = (values: any) => {
-    const childData = actionRef.current ? actionRef.current.getData() : null;
+    const seatMapData = actionRef.current ? actionRef.current.getData() : null;
+    if (!hasSeats) {
+      values.sections = values.sections.map((item: SelectedSection) => ({
+        name: item.fields.sectionName,
+        capacity: item.fields.sectionCapacity,
+      }));
+    }
     onFinish({
       ...values,
-      businessId: getBusiness().id,
-      data: childData,
+      businessId: business?.id,
+      seatMap: seatMapData,
     });
+  };
+
+  const handleSave = async () => {
+    const fields = [
+      'hasSeats',
+      'name',
+      'city',
+      'street',
+      'buildingNumber',
+      'capacity',
+    ];
+    if (!hasSeats) fields.push('sections');
+    const validValues = await form.validateFields(fields).catch(() => {
+      return;
+    });
+
+    if (validValues) {
+      handleOnFinish(validValues);
+    }
   };
 
   return (
     <Row justify="center" gutter={[32, 32]}>
       <Col xs={24} xl={16}>
         <Create
-          saveButtonProps={saveButtonProps}
+          isLoading={formLoading}
+          saveButtonProps={{
+            ...saveButtonProps,
+            onClick: handleSave,
+            loading: formLoading,
+          }}
           goBack={<Button>←</Button>}
           breadcrumb={false}
           headerProps={{ onBack: goToListPage }}
         >
           <Form
             {...formProps}
-            variant="filled"
+            form={form}
             layout="vertical"
             onFinish={handleOnFinish}
             requiredMark={requiredOptionalMark}
@@ -82,6 +121,25 @@ export const CreateVenue = () => {
               gridTemplateColumns: '1fr 1fr',
             }}
           >
+            <Form.Item
+              label="Seats"
+              name="hasSeats"
+              initialValue={hasSeats}
+              rules={[{ required: true, message: '' }]}
+            >
+              <Switch
+                unCheckedChildren={<CloseOutlined />}
+                checkedChildren={<CheckOutlined />}
+                onChange={() => {
+                  setSelectedSections([]);
+                  form.setFieldsValue({
+                    sections: undefined,
+                  });
+                  setHasSeats(!hasSeats);
+                }}
+                value={hasSeats}
+              ></Switch>
+            </Form.Item>
             <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
               <Form.Item
                 label="Name"
@@ -116,135 +174,141 @@ export const CreateVenue = () => {
             </Space>
             <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
               <Form.Item
+                style={{ width: '100%' }}
                 label="Capacity"
                 name="capacity"
                 rules={[{ required: true, message: '' }]}
               >
                 <InputNumber
+                  style={{ width: '100%' }}
                   min={1}
-                  addonAfter="seats"
+                  addonAfter="people"
                   placeholder="Capacity"
                 ></InputNumber>
               </Form.Item>
-              <Form.Item
-                label="Venue Has Seats"
-                name="hasSeats"
-                initialValue={hasSeats}
-                rules={[{ required: true, message: '' }]}
-              >
-                <Switch
-                  unCheckedChildren={<CloseOutlined />}
-                  checkedChildren={<CheckOutlined />}
-                  onChange={() => setHasSeats(!hasSeats)}
-                  value={hasSeats}
-                ></Switch>
-              </Form.Item>
-            </Space>
-            {hasSeats ? (
-              <React.Fragment>
-                <h4
-                  style={{
-                    fontWeight: 600,
-                    lineHeight: 1.4,
-                    fontSize: 20,
-                    marginBottom: 50,
-                  }}
-                >
-                  Designer
-                </h4>
-                <Designer ref={actionRef} />
-              </React.Fragment>
-            ) : (
-              <React.Fragment>
-                <h4
-                  style={{
-                    fontWeight: 600,
-                    lineHeight: 1.4,
-                    fontSize: 20,
-                    marginBottom: 25,
-                  }}
-                >
-                  Sections
-                </h4>
-                <Form.List
-                  name="sections"
-                  rules={[
-                    {
-                      validator: async (_, epc) => {
-                        if (!epc || epc.length < 1) {
-                          return Promise.reject(
-                            new Error('You have to add at least one section'),
+              {!hasSeats && (
+                <React.Fragment>
+                  <Space
+                    style={{ display: 'grid', gridTemplateColumns: '1fr' }}
+                  >
+                    <Form.Item
+                      name="sections"
+                      label="Sections"
+                      rules={[{ required: true, message: '' }]}
+                    >
+                      <Select
+                        mode="multiple"
+                        value={selectedSections}
+                        options={selectedSections.map((item) => ({
+                          value: item,
+                          label: item.fields.name,
+                        }))}
+                        onDeselect={(value) => {
+                          const updated = selectedSections.filter(
+                            (item) => item.value !== String(value),
                           );
-                        }
-                      },
-                    },
-                  ]}
-                >
-                  {(fields, { add, remove }, { errors }) => (
-                    <>
-                      {fields.map(({ key, name, ...restField }) => (
-                        <div key={key} style={{ display: 'flex' }}>
-                          <div style={{ display: 'flex', gap: 10 }}>
-                            <div>
+                          setSelectedSections(updated);
+                          form.setFieldsValue({ priceCategory: updated });
+                        }}
+                        showSearch={false}
+                        placeholder="Sections"
+                        dropdownRender={() => (
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <Flex vertical style={{ padding: 24 }}>
                               <Form.Item
-                                name={[name, 'name']}
-                                {...restField}
-                                rules={[{ required: !hasSeats, message: '' }]}
+                                layout="vertical"
                                 label="Name"
+                                name="sectionName"
+                                rules={[{ required: true, message: '' }]}
                               >
-                                <Input variant="filled" placeholder="Name" />
+                                <Input
+                                  placeholder="Name"
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
                               </Form.Item>
-                            </div>
-                            <div
-                              style={{ display: 'flex', alignItems: 'center' }}
-                            >
                               <Form.Item
-                                name={[name, 'capacity']}
-                                {...restField}
-                                rules={[{ required: !hasSeats, message: '' }]}
+                                layout="vertical"
                                 label="Capacity"
+                                name="sectionCapacity"
+                                rules={[{ required: true, message: '' }]}
                               >
                                 <InputNumber
+                                  min={0}
+                                  style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr',
+                                  }}
                                   placeholder="Capacity"
-                                  variant="filled"
-                                  style={{ width: 150, marginRight: 5 }}
+                                  addonAfter="people"
                                 />
                               </Form.Item>
                               <Button
-                                danger
-                                type="text"
-                                style={{ marginTop: 5 }}
+                                type="dashed"
+                                block
+                                icon={<PlusOutlined />}
                                 onClick={() => {
-                                  remove(name);
+                                  form
+                                    .validateFields([
+                                      'sectionName',
+                                      'sectionCapacity',
+                                    ])
+                                    .then(() => {
+                                      const id = v4();
+                                      const fields = form.getFieldsValue([
+                                        'sectionName',
+                                        'sectionCapacity',
+                                      ]);
+                                      const updated = [
+                                        ...selectedSections,
+                                        {
+                                          label:
+                                            form.getFieldValue('sectionName'),
+                                          value: id,
+                                          fields: fields,
+                                        },
+                                      ];
+                                      setSelectedSections(updated);
+                                      form.setFieldsValue({
+                                        sections: updated,
+                                      });
+                                      form.resetFields([
+                                        'sectionName',
+                                        'sectionCapacity',
+                                      ]);
+                                    })
+                                    .catch(() => {
+                                      return;
+                                    });
                                 }}
-                                icon={<DeleteOutlined />}
-                              />
-                            </div>
+                              >
+                                Add section
+                              </Button>
+                            </Flex>
                           </div>
-                        </div>
-                      ))}
-
-                      <div>
-                        <Button
-                          type="dashed"
-                          icon={<PlusOutlined />}
-                          onClick={() => {
-                            add();
-                          }}
-                        >
-                          Add section
-                        </Button>
-                      </div>
-                      <Space style={{ marginTop: 10 }}>
-                        <Form.ErrorList
-                          errors={errors.map((error) => (
-                            <Text style={{ color: '#ad001d' }}>{error}</Text>
-                          ))}
-                        />
-                      </Space>
-                    </>
-                  )}
-                </Form.List>
+                        )}
+                      />
+                    </Form.Item>
+                  </Space>
+                </React.Fragment>
+              )}
+            </Space>
+            {hasSeats && (
+              <React.Fragment>
+                <h4
+                  style={{
+                    fontWeight: 600,
+                    lineHeight: 1.4,
+                    fontSize: 20,
+                    marginBottom: 24,
+                  }}
+                >
+                  Venue Designer
+                </h4>
+                <Designer ref={actionRef} />
               </React.Fragment>
             )}
           </Form>

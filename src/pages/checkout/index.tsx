@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import SeatReservation from 'components/seats/reservation';
-import { useCreate, useList, useNavigation, useParsed } from '@refinedev/core';
+import {
+  useCreate,
+  useList,
+  useNavigation,
+  useParsed,
+  useUpdate,
+} from '@refinedev/core';
 import { EVENT_CHECKOUT_QUERY } from 'graphql/queries';
 import {
   Select,
@@ -10,31 +16,38 @@ import {
   Col,
   Flex,
   Popconfirm,
-  Button,
   Tag,
   Empty,
+  Button,
 } from 'antd';
-import { Discount, Event, Ticket, User } from 'graphql/schema.types';
-import { getBusiness } from 'util/get-business';
+import { Discount, Event, User } from 'graphql/schema.types';
 import { Text } from 'components';
 import SelectSkeleton from 'components/skeleton/select';
 import dayjs from 'dayjs';
 import {
+  CheckOutlined,
   CheckSquareOutlined,
   CloseOutlined,
   CloseSquareOutlined,
   MinusOutlined,
   PlusOutlined,
   SaveOutlined,
+  ScanOutlined,
 } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
-import { CREATE_TICKETS_CHECKOUT } from 'graphql/mutations';
+import {
+  CREATE_TICKETS_CHECKOUT,
+  UPDATE_TICKET_MUTATION,
+} from 'graphql/mutations';
+import { useGlobalStore } from 'providers/context/store';
+import { SaveButton } from '@refinedev/antd';
 
 type params = {
   eventId: string;
 };
 
 export const Checkout = () => {
+  const business = useGlobalStore((state) => state.business);
   const { params } = useParsed<params>();
   const [tickets, setTickets] = useState<any[]>([]);
   const [event, setEvent] = useState<Event>();
@@ -42,7 +55,7 @@ export const Checkout = () => {
   const [removed, setRemoved] = useState(0);
   const [total, setTotal] = useState(0);
   const { edit } = useNavigation();
-
+  const { mutate: validate, isLoading: validateLoading } = useUpdate();
   const { mutate, isLoading: mutationLoading } = useCreate({
     resource: 'tickets',
     mutationOptions: {
@@ -56,13 +69,14 @@ export const Checkout = () => {
       refetch();
 
       return {
-        message: `Successfully created.`,
+        message: `Successfully created tickets`,
         type: 'success',
       };
     },
-    errorNotification: () => {
+    errorNotification: (data: any) => {
       return {
-        message: `Something went wrong creating tickets.`,
+        message: 'Error',
+        description: data.messsage,
         type: 'error',
       };
     },
@@ -74,14 +88,17 @@ export const Checkout = () => {
 
   const eventId = params?.eventId;
 
-  const { data, isFetching, isLoading, refetch } = useList({
+  const { data, isFetching, refetch } = useList({
     resource: 'getEventCheckout',
     meta: {
       meta: {
-        businessId: getBusiness().id,
+        businessId: business?.id,
         eventId: event?.id,
       },
       gqlQuery: EVENT_CHECKOUT_QUERY,
+    },
+    queryOptions: {
+      enabled: !!business,
     },
   });
 
@@ -108,8 +125,8 @@ export const Checkout = () => {
       if (i == index) {
         item.discount = selectedDiscount;
         item.price = item.discount
-          ? Math.ceil((1 - item.discount.percentage / 100) * item.epcPrice)
-          : item.epcPrice;
+          ? Math.ceil((1 - item.discount.percentage / 100) * item.pcPrice)
+          : item.pcPrice;
       }
       return item;
     });
@@ -120,50 +137,112 @@ export const Checkout = () => {
     const updatedTickets = tickets.map((item: any, i: number) => {
       if (i == index) {
         item.discount = null;
-        item.price = item.epcPrice;
+        item.price = item.pcPrice;
       }
       return item;
     });
     setTickets(updatedTickets);
   };
 
+  const handleValidateState = async (ticketId: string) => {
+    validate({
+      resource: 'tickets',
+      id: ticketId,
+      values: { validated: new Date() },
+      successNotification: () => {
+        return {
+          description: 'Success',
+          message: 'Successfully validated ticket',
+          type: 'success',
+        };
+      },
+      meta: {
+        gqlMutation: UPDATE_TICKET_MUTATION,
+      },
+    });
+  };
+
   const getTicketHolder = (ticketId: string) => {
     const ticket = data?.response.tickets.find(
-      (ticket: Ticket) => ticket.id == ticketId,
+      (ticket: any) => ticket.id == ticketId,
     );
-    if (ticket.user) {
+    if (ticket && ticket.user) {
       return (
-        <Flex gap={10}>
-          <Flex gap={5}>
+        <Flex gap={10} align="center">
+          <Flex gap={10} align="center">
             <Text>User:</Text>
             <Text
               style={{ textDecoration: 'underline', cursor: 'pointer' }}
-              onClick={() => edit('users', ticket.user.id)}
+              onClick={() => {
+                if (ticket.user) edit('users', ticket?.user?.id);
+              }}
             >
               {ticket.user.email}
             </Text>
           </Flex>
-          <Flex gap={10}>
+          <Flex gap={10} align="center">
             <Text>Ticket:</Text>
             <Text
               style={{ textDecoration: 'underline', cursor: 'pointer' }}
               onClick={() => edit('tickets', ticket.id)}
             >
-              {ticket.id.slice(-12)}
+              {ticket.id.slice(0, 8)}
             </Text>
+            <Popconfirm
+              title="Are you sure?"
+              onConfirm={() => {
+                handleValidateState(ticket.id);
+              }}
+              okText="Validate"
+              cancelText="Cancel"
+            >
+              <Button
+                loading={validateLoading}
+                disabled={ticket.validated ? true : false}
+                style={{
+                  backgroundColor: ticket.validated ? '#f6ffed' : 'white',
+                  ...(ticket.validated && { borderColor: '#b7eb8f' }),
+                  width: 24,
+                  height: 24,
+                  color: ticket.validated ? '#389e0d' : '#383838',
+                }}
+                icon={ticket.validated ? <CheckOutlined /> : <ScanOutlined />}
+              />
+            </Popconfirm>
           </Flex>
         </Flex>
       );
-    } else {
+    } else if (ticket) {
       return (
-        <Flex gap={5}>
+        <Flex gap={10} align="center">
           <Text>Ticket:</Text>
           <Text
             style={{ textDecoration: 'underline', cursor: 'pointer' }}
             onClick={() => edit('tickets', ticket.id)}
           >
-            {ticket.id.slice(-12)}
+            {ticket.id.slice(0, 8)}
           </Text>
+          <Popconfirm
+            title="Are you sure?"
+            onConfirm={() => {
+              handleValidateState(ticket.id);
+            }}
+            okText="Validate"
+            cancelText="Cancel"
+          >
+            <Button
+              loading={validateLoading}
+              disabled={ticket.validated ? true : false}
+              style={{
+                backgroundColor: ticket.validated ? '#f6ffed' : 'white',
+                ...(ticket.validated && { borderColor: '#b7eb8f' }),
+                width: 24,
+                height: 24,
+                color: ticket.validated ? '#389e0d' : '#383838',
+              }}
+              icon={ticket.validated ? <CheckOutlined /> : <ScanOutlined />}
+            />
+          </Popconfirm>
         </Flex>
       );
     }
@@ -178,10 +257,10 @@ export const Checkout = () => {
     }
   }, [data?.response.events, eventId]);
 
-  const handleRemoveTicket = (id: string, epc = false) => {
-    if (epc) {
+  const handleRemoveTicket = (id: string, pc = false) => {
+    if (pc) {
       const ticks = tickets.slice().reverse();
-      const index = ticks.findIndex((item: any) => item.epc.id == id);
+      const index = ticks.findIndex((item: any) => item.pc.id == id);
       if (index !== -1) {
         ticks.splice(index, 1);
         setTickets(ticks.slice().reverse());
@@ -195,13 +274,13 @@ export const Checkout = () => {
 
   const handleAddTicket = (item: any, index: number) => {
     if (
-      tickets.filter((ticket) => ticket.epc.id == item.id).length <
-      data?.response.eventPriceCategories.counts[index]
+      tickets.filter((ticket) => ticket.pc.id == item.id).length <
+      data?.response.priceCategories.counts[index]
     ) {
       const ticket = {
         id: uuidv4(),
-        epc: item,
-        epcPrice: item.price,
+        pc: item,
+        pcPrice: item.price,
         price: item.price,
       };
       setTickets([...tickets, ticket]);
@@ -212,41 +291,47 @@ export const Checkout = () => {
     if (tickets.length < 1) {
       return;
     }
-    const ticketToCreate = [];
-    if (event?.venue.hasSeats) {
+    const ticketsToCreate = [];
+    if (event?.template.venue.hasSeats) {
       for (const ticket of tickets) {
         if (ticket.reserved) {
           return;
         }
-        ticketToCreate.push({
+        ticketsToCreate.push({
           price: ticket.price,
           userId: user ? user.id : null,
           discountId: ticket.discount ? ticket.discount.id : null,
+          discount: ticket.discount ? ticket.discount.name : null,
           seatId: ticket.seatId,
+          seat: ticket.seatNumber,
+          rowId: ticket.rowId,
+          row: ticket.rowName,
           eventId: event.id,
           sectionId: ticket.sectionId,
-          businessId: getBusiness().id,
+          section: ticket.sectionName,
+          businessId: business?.id,
         });
       }
     } else {
       for (const ticket of tickets) {
-        ticketToCreate.push({
+        ticketsToCreate.push({
           price: ticket.price,
           userId: user ? user.id : null,
           discountId: ticket.discount ? ticket.discount.id : null,
           eventId: event?.id,
-          sectionId: ticket.epc.section.id,
-          businessId: getBusiness().id,
+          sectionId: ticket.pc.section.id,
+          section: ticket.pc.section.name,
+          businessId: business?.id,
         });
       }
     }
     mutate({
       values: {
-        tickets: ticketToCreate,
+        tickets: ticketsToCreate,
         order: {
           total: total,
           userId: user ? user.id : null,
-          businessId: getBusiness().id,
+          businessId: business?.id,
         },
       },
     });
@@ -282,7 +367,7 @@ export const Checkout = () => {
             }}
             styles={{ body: { height: '100%' } }}
           >
-            {isLoading ? (
+            {isFetching ? (
               <Flex justify="center" align="center" style={{ height: '100%' }}>
                 <Spin />
               </Flex>
@@ -290,7 +375,7 @@ export const Checkout = () => {
               <Flex justify="center" align="center" style={{ height: '100%' }}>
                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </Flex>
-            ) : event?.venue?.hasSeats ? (
+            ) : event?.template.venue?.hasSeats ? (
               <SeatReservation
                 eventData={event}
                 setTickets={setTickets}
@@ -299,8 +384,8 @@ export const Checkout = () => {
               />
             ) : (
               <Flex vertical gap={20} style={{ width: '100%', height: '100%' }}>
-                {data?.response.eventPriceCategories && !isFetching ? (
-                  data?.response.eventPriceCategories.nodes.map(
+                {data?.response.priceCategories ? (
+                  data?.response.priceCategories.nodes.map(
                     (item: any, index: number) => (
                       <Flex key={item.id} vertical>
                         <Flex
@@ -323,7 +408,7 @@ export const Checkout = () => {
                             </Flex>
                             <Flex gap={5} style={{ minWidth: 150 }}>
                               <Text>Price:</Text>
-                              <Text>{item.price}</Text>
+                              <Text>{`${item.price} ${business?.currency}`}</Text>
                             </Flex>
                           </Flex>
                           <Flex gap={30} justify="space-between">
@@ -334,7 +419,7 @@ export const Checkout = () => {
                             <Text style={{ width: 20 }}>
                               {
                                 tickets.filter(
-                                  (ticket) => ticket.epc.id == item.id,
+                                  (ticket) => ticket.pc.id == item.id,
                                 ).length
                               }
                             </Text>
@@ -345,7 +430,7 @@ export const Checkout = () => {
                           </Flex>
                         </Flex>
                         <Flex justify="flex-end">
-                          <Text>{`${data?.response.eventPriceCategories.counts[index]} available`}</Text>
+                          <Text>{`${data?.response.priceCategories.counts[index]} available`}</Text>
                         </Flex>
                       </Flex>
                     ),
@@ -372,15 +457,15 @@ export const Checkout = () => {
                 style={{ width: '100%' }}
               >
                 <Text style={{ width: '20%', fontWeight: 600 }}>Event</Text>
-                {isLoading ? (
+                {isFetching ? (
                   <SelectSkeleton width={'100%'} />
                 ) : (
                   <Select
                     allowClear
-                    variant="filled"
                     style={{ width: '80%' }}
                     showSearch
                     placeholder="Select event"
+                    value={event?.id}
                     filterOption={(input, option) =>
                       String(option?.label ?? '')
                         .toLowerCase()
@@ -397,12 +482,11 @@ export const Checkout = () => {
               </Flex>
               <Flex justify="flex-start" align="center">
                 <Text style={{ width: '20%', fontWeight: 600 }}>User</Text>
-                {isLoading ? (
+                {isFetching ? (
                   <SelectSkeleton width={'100%'} />
                 ) : (
                   <Select
                     allowClear
-                    variant="filled"
                     style={{ width: '80%' }}
                     showSearch
                     placeholder="Select user"
@@ -441,7 +525,7 @@ export const Checkout = () => {
                     <Flex vertical gap={20} style={{ width: '100%' }}>
                       {tickets.map((item: any, i: number) => (
                         <Flex
-                          key={i}
+                          key={item.id}
                           vertical
                           style={{
                             width: '100%',
@@ -451,7 +535,7 @@ export const Checkout = () => {
                           }}
                         >
                           <Flex justify="space-between">
-                            {event?.venue?.hasSeats ? (
+                            {event?.template.venue?.hasSeats ? (
                               <Flex gap={10}>
                                 <Text>{`Seat: ${item.seatNumber}`}</Text>
                                 <Text>{`Row: ${item.rowName}`}</Text>
@@ -464,7 +548,7 @@ export const Checkout = () => {
                                     >
                                       Available
                                     </Tag>
-                                    <Text>{`Price: ${item.price ? item.price : item.epcPrice}`}</Text>
+                                    <Text>{`Price: ${item.price ? item.price : item.pcPrice} ${business?.currency}`}</Text>
                                   </Flex>
                                 ) : (
                                   <Tag
@@ -477,8 +561,8 @@ export const Checkout = () => {
                               </Flex>
                             ) : (
                               <Flex gap={10}>
-                                <Text>{`Section: ${item.epc.section.name}`}</Text>
-                                <Text>{`Price: ${item.price}`}</Text>
+                                <Text>{`Section: ${item.pc.section.name}`}</Text>
+                                <Text>{`Price: ${item.price} ${business?.currency}`}</Text>
                               </Flex>
                             )}
                             <CloseOutlined
@@ -488,8 +572,9 @@ export const Checkout = () => {
                               }}
                             />
                           </Flex>
-                          {!event?.venue?.hasSeats ||
-                          (event?.venue?.hasSeats && !item.reserved) ? (
+                          {!event?.template.venue?.hasSeats ||
+                          (event?.template.venue?.hasSeats &&
+                            !item.reserved) ? (
                             <Flex align="center">
                               <Popconfirm
                                 placement="topLeft"
@@ -552,7 +637,7 @@ export const Checkout = () => {
                     </Flex>
                     <Flex justify="space-between">
                       <Text>Total</Text>
-                      <Text>{total}</Text>
+                      <Text>{`${total} ${business?.currency}`}</Text>
                     </Flex>
                   </Flex>
                 )}
@@ -560,18 +645,18 @@ export const Checkout = () => {
             </Flex>
           </Card>
           <Flex justify="flex-end" style={{ marginTop: 10 }}>
-            <Button
+            <SaveButton
               loading={mutationLoading}
               type="primary"
               icon={<SaveOutlined />}
               onClick={handleAction}
             >
               {tickets[0]
-                ? (tickets[0] as any).reserve && event?.venue?.hasSeats
+                ? (tickets[0] as any).reserve && event?.template.venue?.hasSeats
                   ? 'Remove tickets'
                   : 'Create tickets'
                 : 'Create tickets'}
-            </Button>
+            </SaveButton>
           </Flex>
         </Col>
       </Row>

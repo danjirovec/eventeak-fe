@@ -10,19 +10,19 @@ import {
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo } from '@refinedev/core';
-import { Input, InputNumber, Space, Table } from 'antd';
-import { DISCOUNTS_QUERY } from 'graphql/queries';
+import { Input, Space, Table } from 'antd';
+import { MEMBERSHIP_TYPE_QUERY } from 'graphql/queries';
 import { CopyOutlined, FilterFilled } from '@ant-design/icons';
 import { Text } from 'components/text';
-import { Discount } from 'graphql/schema.types';
+import { MembershipType } from 'graphql/schema.types';
 import { useGlobalStore } from 'providers/context/store';
 
-export const DiscountList = ({ children }: React.PropsWithChildren) => {
+export const MembershipTypeList = ({ children }: React.PropsWithChildren) => {
   const business = useGlobalStore((state) => state.business);
-  useDocumentTitle('Discounts - Eventeak');
+  useDocumentTitle('Membership Types - Eventeak');
   const go = useGo();
   const { tableProps, filters, sorters } = useTable({
-    resource: 'discounts',
+    resource: 'membership-types',
     onSearch: (values: any) => {
       return [
         {
@@ -60,20 +60,21 @@ export const DiscountList = ({ children }: React.PropsWithChildren) => {
       ],
     },
     meta: {
-      gqlQuery: DISCOUNTS_QUERY,
+      gqlQuery: MEMBERSHIP_TYPE_QUERY,
     },
   });
 
   return (
     <div>
       <List
+        title="Membership Types"
         breadcrumb={false}
         headerButtons={() => (
           <CreateButton
             disabled={!business}
             onClick={() => {
               go({
-                to: { resource: 'discounts', action: 'create' },
+                to: { resource: 'membership-types', action: 'create' },
                 options: { keepQuery: true },
                 type: 'replace',
               });
@@ -89,14 +90,14 @@ export const DiscountList = ({ children }: React.PropsWithChildren) => {
           showSorterTooltip
           dataSource={business ? tableProps.dataSource : []}
         >
-          <Table.Column<Discount>
+          <Table.Column<MembershipType>
             dataIndex="name"
             title="Name"
-            defaultFilteredValue={getDefaultFilter('id', filters)}
+            defaultFilteredValue={getDefaultFilter('name', filters)}
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
-                <Input style={{ width: 250 }} placeholder="Name" />
+                <Input placeholder="Name" />
               </FilterDropdown>
             )}
             sorter={{ multiple: 1 }}
@@ -107,38 +108,28 @@ export const DiscountList = ({ children }: React.PropsWithChildren) => {
               </Space>
             )}
           />
-          <Table.Column<Discount>
-            dataIndex="percentage"
-            title="Percentage"
-            defaultFilteredValue={getDefaultFilter('percentage', filters)}
+          <Table.Column<MembershipType>
+            dataIndex="description"
+            title="Description"
+            defaultFilteredValue={getDefaultFilter('description', filters)}
             filterIcon={<FilterFilled />}
-            filterDropdown={(props) => {
-              return (
-                <FilterDropdown
-                  mapValue={(selectedKeys) => [selectedKeys]}
-                  {...props}
-                >
-                  <InputNumber
-                    style={{ width: 250 }}
-                    placeholder="Percentage"
-                  />
-                </FilterDropdown>
-              );
-            }}
-            sorter={{ multiple: 1 }}
-            defaultSortOrder={getDefaultSortOrder('percentage', sorters)}
+            filterDropdown={(props) => (
+              <FilterDropdown {...props}>
+                <Input placeholder="Description" />
+              </FilterDropdown>
+            )}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>
-                  {`${record.percentage} %`}
+                  {record.description}
                 </Text>
               </Space>
             )}
           />
-          <Table.Column<Discount>
+          <Table.Column<MembershipType>
             width={200}
-            dataIndex="id"
             title="Actions"
+            dataIndex="id"
             fixed="right"
             render={(value) => (
               <Space>
@@ -150,6 +141,16 @@ export const DiscountList = ({ children }: React.PropsWithChildren) => {
                   icon={<CopyOutlined />}
                 />
                 <DeleteButton
+                  hideText
+                  size="small"
+                  recordItemId={value}
+                  successNotification={() => {
+                    return {
+                      description: 'Success',
+                      message: `Successfully deleted a membership type`,
+                      type: 'success',
+                    };
+                  }}
                   errorNotification={(data: any) => {
                     return {
                       description: 'Error',
@@ -157,9 +158,6 @@ export const DiscountList = ({ children }: React.PropsWithChildren) => {
                       type: 'error',
                     };
                   }}
-                  hideText
-                  size="small"
-                  recordItemId={value}
                 />
               </Space>
             )}

@@ -1,26 +1,33 @@
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import {
+  BooleanField,
   CloneButton,
   CreateButton,
   DeleteButton,
   EditButton,
   FilterDropdown,
+  getDefaultSortOrder,
   List,
-  ShowButton,
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo } from '@refinedev/core';
-import { Input, Space, Table } from 'antd';
+import { Input, InputNumber, Space, Table } from 'antd';
 import { VENUES_QUERY } from 'graphql/queries';
-import { CopyOutlined, FilterFilled } from '@ant-design/icons';
+import {
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  CopyOutlined,
+  FilterFilled,
+} from '@ant-design/icons';
 import { Text } from 'components/text';
 import { Venue } from 'graphql/schema.types';
-import { getBusiness } from 'util/get-business';
+import { useGlobalStore } from 'providers/context/store';
 
 export const VenueList = ({ children }: React.PropsWithChildren) => {
-  useDocumentTitle('Venues - Applausio');
+  const business = useGlobalStore((state) => state.business);
+  useDocumentTitle('Venues - Eventeak');
   const go = useGo();
-  const { tableProps, filters } = useTable({
+  const { tableProps, filters, sorters } = useTable({
     resource: 'venues',
     onSearch: (values: any) => {
       return [
@@ -47,12 +54,27 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
         {
           field: 'business.id',
           operator: 'eq',
-          value: getBusiness().id,
+          value: business?.id,
         },
       ],
       initial: [
         {
           field: 'name',
+          operator: 'contains',
+          value: undefined,
+        },
+        {
+          field: 'city',
+          operator: 'contains',
+          value: undefined,
+        },
+        {
+          field: 'street',
+          operator: 'contains',
+          value: undefined,
+        },
+        {
+          field: 'buildingNumber',
           operator: 'contains',
           value: undefined,
         },
@@ -69,7 +91,7 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
         breadcrumb={false}
         headerButtons={() => (
           <CreateButton
-            disabled={sessionStorage.getItem('business') ? false : true}
+            disabled={!business}
             onClick={() => {
               go({
                 to: { resource: 'venues', action: 'create' },
@@ -86,9 +108,7 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
           bordered
           rowHoverable
           showSorterTooltip
-          dataSource={
-            sessionStorage.getItem('business') ? tableProps.dataSource : []
-          }
+          dataSource={business ? tableProps.dataSource : []}
         >
           <Table.Column<Venue>
             dataIndex="name"
@@ -97,9 +117,11 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
-                <Input placeholder="Name" />
+                <Input style={{ width: 250 }} placeholder="Name" />
               </FilterDropdown>
             )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('name', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.name}</Text>
@@ -109,13 +131,15 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
           <Table.Column<Venue>
             dataIndex="city"
             title="City"
-            defaultFilteredValue={getDefaultFilter('id', filters)}
+            defaultFilteredValue={getDefaultFilter('city', filters)}
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
-                <Input placeholder="City" />
+                <Input style={{ width: 250 }} placeholder="City" />
               </FilterDropdown>
             )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('city', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.city}</Text>
@@ -125,13 +149,15 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
           <Table.Column<Venue>
             dataIndex="street"
             title="Street"
-            defaultFilteredValue={getDefaultFilter('id', filters)}
+            defaultFilteredValue={getDefaultFilter('street', filters)}
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
-                <Input placeholder="Street" />
+                <Input style={{ width: 250 }} placeholder="Street" />
               </FilterDropdown>
             )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('street', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.street}</Text>
@@ -141,13 +167,15 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
           <Table.Column<Venue>
             dataIndex="buildingNumber"
             title="Building Number"
-            defaultFilteredValue={getDefaultFilter('id', filters)}
+            defaultFilteredValue={getDefaultFilter('buildingNumber', filters)}
             filterIcon={<FilterFilled />}
             filterDropdown={(props) => (
               <FilterDropdown {...props}>
                 <Input placeholder="Building Number" />
               </FilterDropdown>
             )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('buildingNumber', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>
@@ -159,13 +187,20 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
           <Table.Column<Venue>
             dataIndex="capacity"
             title="Capacity"
-            defaultFilteredValue={getDefaultFilter('id', filters)}
+            defaultFilteredValue={getDefaultFilter('capacity', filters)}
             filterIcon={<FilterFilled />}
-            filterDropdown={(props) => (
-              <FilterDropdown {...props}>
-                <Input placeholder="Capacity" />
-              </FilterDropdown>
-            )}
+            filterDropdown={(props) => {
+              return (
+                <FilterDropdown
+                  mapValue={(selectedKeys) => [selectedKeys]}
+                  {...props}
+                >
+                  <InputNumber style={{ width: 250 }} placeholder="Capacity" />
+                </FilterDropdown>
+              );
+            }}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('capacity', sorters)}
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.capacity}</Text>
@@ -173,19 +208,44 @@ export const VenueList = ({ children }: React.PropsWithChildren) => {
             )}
           />
           <Table.Column<Venue>
+            dataIndex="hasSeats"
+            title="Seats"
+            defaultFilteredValue={getDefaultFilter('hasSeats', filters)}
+            filterIcon={<FilterFilled />}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('hasSeats', sorters)}
+            render={(value, record) => (
+              <Space>
+                <BooleanField
+                  value={record.hasSeats}
+                  trueIcon={<CheckCircleTwoTone twoToneColor="#007965" />}
+                  falseIcon={<CloseCircleTwoTone twoToneColor="#ad001d" />}
+                  valueLabelTrue="Yes"
+                  valueLabelFalse="No"
+                />
+              </Space>
+            )}
+          />
+          <Table.Column<Venue>
+            width={200}
             dataIndex="id"
             title="Actions"
             fixed="right"
             render={(value) => (
               <Space>
                 <EditButton hideText size="small" recordItemId={value} />
-                <CloneButton
+                <DeleteButton
+                  errorNotification={(data: any) => {
+                    return {
+                      description: 'Error',
+                      message: `${data.message}`,
+                      type: 'error',
+                    };
+                  }}
                   hideText
                   size="small"
                   recordItemId={value}
-                  icon={<CopyOutlined />}
                 />
-                <DeleteButton hideText size="small" recordItemId={value} />
               </Space>
             )}
           />

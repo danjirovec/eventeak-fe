@@ -3,7 +3,7 @@ import {
   Button,
   Col,
   DatePicker,
-  Divider,
+  Flex,
   Form,
   Input,
   InputNumber,
@@ -15,31 +15,43 @@ import {
 import { Create, useForm, useSelect } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_TEMPLATE_MUTATION } from 'graphql/mutations';
-import { SECTIONS_QUERY, VENUES_QUERY } from 'graphql/queries';
-import { SectionsListQuery, VenuesListQuery } from 'graphql/types';
+import { DISCOUNTS_QUERY, SECTIONS_QUERY, VENUES_QUERY } from 'graphql/queries';
+import {
+  DiscountsListQuery,
+  SectionsListQuery,
+  VenuesListQuery,
+} from 'graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { requiredOptionalMark } from 'components/requiredMark';
-import {
-  CheckOutlined,
-  CloseOutlined,
-  DeleteOutlined,
-  EllipsisOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import { languageOptions, categoryOptions } from 'enum/enum';
-import { getBusiness } from 'util/get-business';
 import { uploadCreate } from 'components/upload/util';
 import SupaUpload from 'components/upload/supaUpload';
-import { Text } from 'components';
+import { useGlobalStore } from 'providers/context/store';
+import { v4 } from 'uuid';
+
+type KeyValueObject = {
+  [key: string]: string | Date | number;
+};
+
+type SelectedPriceCategory = {
+  label: string;
+  value: string;
+  fields: KeyValueObject;
+};
 
 export const CreateTemplate = () => {
+  const business = useGlobalStore((state) => state.business);
   const [formData, setFormData] = useState<FormData | null>(new FormData());
-  const [parent, setParent] = useState(false);
+  const [root, setRoot] = useState(false);
+  const [selectedPriceCategories, setSelectedPriceCategories] = useState<
+    SelectedPriceCategory[]
+  >([]);
   const go = useGo();
   const { TextArea } = Input;
   const goToListPage = () => {
     go({
-      to: { resource: 'event-templates', action: 'list' },
+      to: { resource: 'templates', action: 'list' },
       options: { keepQuery: true },
       type: 'replace',
     });
@@ -47,10 +59,9 @@ export const CreateTemplate = () => {
 
   const { form, formProps, formLoading, onFinish, saveButtonProps } = useForm({
     action: 'create',
-    resource: 'event-templates',
-    redirect: false,
+    resource: 'templates',
+    redirect: 'list',
     mutationMode: 'pessimistic',
-    onMutationSuccess: goToListPage,
     meta: {
       customType: true,
       gqlMutation: CREATE_TEMPLATE_MUTATION,
@@ -58,9 +69,9 @@ export const CreateTemplate = () => {
     submitOnEnter: true,
   });
 
-  const [venueId, setVenueId] = useState(form.getFieldValue('venueId'));
+  const [venueId, setVenueId] = useState<string>();
 
-  const { selectProps, queryResult } = useSelect<
+  const { selectProps: venues, query: venuesQuery } = useSelect<
     GetFieldsFromList<VenuesListQuery>
   >({
     resource: 'venues',
@@ -77,7 +88,7 @@ export const CreateTemplate = () => {
       {
         field: 'business.id',
         operator: 'eq',
-        value: getBusiness().id,
+        value: business?.id,
       },
     ],
     sorters: [
@@ -88,54 +99,118 @@ export const CreateTemplate = () => {
     ],
   });
 
-  const { selectProps: sectionsSelectProps, queryResult: sectionsQueryResult } =
-    useSelect<GetFieldsFromList<SectionsListQuery>>({
-      resource: 'sections',
-      optionLabel: 'name',
-      optionValue: 'id',
-      meta: {
-        gqlQuery: SECTIONS_QUERY,
+  const { selectProps: sections, query: sectionsQuery } = useSelect<
+    GetFieldsFromList<SectionsListQuery>
+  >({
+    resource: 'sections',
+    optionLabel: 'name',
+    optionValue: 'id',
+    meta: {
+      gqlQuery: SECTIONS_QUERY,
+    },
+    pagination: {
+      pageSize: 20,
+      mode: 'server',
+    },
+    filters: [
+      {
+        field: 'venue.id',
+        operator: 'eq',
+        value: venueId,
       },
-      pagination: {
-        pageSize: 20,
-        mode: 'server',
+    ],
+    sorters: [
+      {
+        field: 'created',
+        order: 'desc',
       },
-      filters: [
-        {
-          field: 'venue.id',
-          operator: 'eq',
-          value: venueId,
-        },
-      ],
-      sorters: [
-        {
-          field: 'created',
-          order: 'desc',
-        },
-      ],
-    });
+    ],
+    queryOptions: {
+      enabled: !!venueId,
+    },
+  });
+
+  const filteredSections = sections?.options?.filter(
+    (o: any) =>
+      !selectedPriceCategories.some(
+        (price: any) => price.fields.pcSection === o.value,
+      ),
+  );
+
+  const { selectProps: discounts, query: discountsQuery } = useSelect<
+    GetFieldsFromList<DiscountsListQuery>
+  >({
+    resource: 'discounts',
+    optionLabel: 'name',
+    optionValue: 'id',
+    meta: {
+      gqlQuery: DISCOUNTS_QUERY,
+    },
+    pagination: {
+      pageSize: 20,
+      mode: 'server',
+    },
+    filters: [
+      {
+        field: 'business.id',
+        operator: 'eq',
+        value: business?.id,
+      },
+    ],
+    sorters: [
+      {
+        field: 'created',
+        order: 'desc',
+      },
+    ],
+  });
 
   const handleUpload = (formData: FormData | null) => {
     setFormData(formData);
   };
 
   const handleOnFinish = async (values: any) => {
-    if (values.eventPriceCategory) {
-      values.eventPriceCategory = values.eventPriceCategory.map(
-        ({ section, id, ...rest }: any) => ({
-          ...rest,
-          sectionId: section ? (section.value ? section.value : section) : null,
-        }),
-      );
-    }
+    values.priceCategory = values.priceCategory.map(
+      (pc: SelectedPriceCategory) => ({
+        name: pc.fields.pcName,
+        sectionId: pc.fields.pcSection,
+        price: pc.fields.pcPrice,
+        startDate: pc.fields.pcStart,
+        endDate: pc.fields.pcEnd,
+      }),
+    );
+    values.type = root ? 'Root' : 'Leaf';
     const posterUrl = await uploadCreate('posters', formData);
 
     onFinish({
       ...values,
-      type: values.type ? 'Parent' : 'Child',
-      businessId: getBusiness().id,
+      businessId: business?.id,
       posterUrl: posterUrl,
     });
+  };
+
+  const handleSave = async () => {
+    const validValues = await form
+      .validateFields([
+        'type',
+        'name',
+        'category',
+        'length',
+        'venueId',
+        'language',
+        'priceCategory',
+        'description',
+        'discount',
+        'subtitles',
+        'posterUrl',
+      ])
+      .catch(() => {
+        return;
+      });
+
+    if (validValues) {
+      await handleOnFinish(validValues);
+    }
   };
 
   return (
@@ -144,6 +219,7 @@ export const CreateTemplate = () => {
         <Create
           saveButtonProps={{
             ...saveButtonProps,
+            onClick: handleSave,
             loading: formLoading,
           }}
           isLoading={formLoading}
@@ -153,23 +229,22 @@ export const CreateTemplate = () => {
         >
           <Form
             {...formProps}
-            variant="filled"
             layout="vertical"
             onFinish={handleOnFinish}
             requiredMark={requiredOptionalMark}
           >
             <Space style={{ display: 'grid', gridTemplateColumns: '1fr' }}>
               <Form.Item
-                label="Parent"
+                label="Root"
                 name="type"
                 rules={[{ required: true, message: '' }]}
-                initialValue={parent}
+                initialValue={root}
               >
                 <Switch
                   unCheckedChildren={<CloseOutlined />}
                   checkedChildren={<CheckOutlined />}
-                  checked={parent}
-                  onChange={() => setParent(!parent)}
+                  checked={root}
+                  onChange={() => setRoot(!root)}
                 />
               </Form.Item>
             </Space>
@@ -187,13 +262,22 @@ export const CreateTemplate = () => {
                 rules={[{ required: true, message: '' }]}
               >
                 <Select
-                  onChange={() => setVenueId(form.getFieldValue('venueId'))}
+                  allowClear
+                  onChange={(value) => {
+                    if (!value) {
+                      setVenueId(undefined);
+                      setSelectedPriceCategories([]);
+                      form.setFieldsValue({
+                        pcSection: undefined,
+                        priceCategory: undefined,
+                      });
+                    } else {
+                      setVenueId(String(value));
+                    }
+                  }}
                   placeholder="Venue"
-                  {...selectProps}
-                  options={queryResult.data?.data.map((venue) => ({
-                    value: venue.id,
-                    label: venue.name,
-                  }))}
+                  {...venues}
+                  options={venues.options}
                 />
               </Form.Item>
             </Space>
@@ -208,7 +292,7 @@ export const CreateTemplate = () => {
               <Form.Item
                 label="Length"
                 name="length"
-                rules={[{ required: !parent, message: '' }]}
+                rules={[{ required: !root, message: '' }]}
               >
                 <InputNumber
                   min={0}
@@ -222,7 +306,7 @@ export const CreateTemplate = () => {
               <Form.Item
                 label="Language"
                 name="language"
-                rules={[{ required: !parent, message: '' }]}
+                rules={[{ required: !root, message: '' }]}
               >
                 <Select placeholder="Language" options={languageOptions} />
               </Form.Item>
@@ -233,72 +317,54 @@ export const CreateTemplate = () => {
             <Form.Item
               label="Description"
               name="description"
-              rules={[{ required: !parent, message: '' }]}
+              rules={[{ required: !root, message: '' }]}
             >
               <TextArea placeholder="Description"></TextArea>
             </Form.Item>
-            <Form.Item name="posterUrl" label="Poster" hasFeedback>
-              <SupaUpload folder="posters" onUpload={handleUpload} />
-            </Form.Item>
-            <h4 style={{ fontWeight: 600, lineHeight: 1.4, fontSize: 20 }}>
-              Price Categories
-            </h4>
-
-            <Form.List
-              name="eventPriceCategory"
-              rules={[
-                {
-                  validator: async (_, epc) => {
-                    if (!epc || epc.length < 1) {
-                      return Promise.reject(
-                        new Error(
-                          'You have to add at least one price category',
-                        ),
-                      );
-                    }
-                  },
-                },
-              ]}
-            >
-              {(fields, { add, remove }, { errors }) => (
-                <>
-                  {fields.map(({ key, name, ...restField }) => (
-                    <Space
-                      key={key}
-                      align="baseline"
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
+            <Space style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <Form.Item
+                name="priceCategory"
+                label="Price categories"
+                rules={[{ required: true, message: '' }]}
+              >
+                <Select
+                  mode="multiple"
+                  value={selectedPriceCategories}
+                  options={selectedPriceCategories.map((item) => ({
+                    value: item,
+                    label: `${item.fields.pcName} - ${item.fields.pcPrice} ${business?.currency}`,
+                  }))}
+                  onDeselect={(value) => {
+                    const updated = selectedPriceCategories.filter(
+                      (item) => item.value !== String(value),
+                    );
+                    setSelectedPriceCategories(updated);
+                    form.setFieldsValue({ priceCategory: updated });
+                  }}
+                  showSearch={false}
+                  placeholder="Price categories"
+                  dropdownRender={() => (
+                    <div
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
                       }}
                     >
-                      <Space
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          alignItems: 'center',
-                        }}
-                      >
+                      <Flex vertical style={{ padding: 24 }}>
                         <Form.Item
+                          layout="vertical"
                           label="Name"
-                          {...restField}
-                          name={[name, 'name']}
+                          name="pcName"
                           rules={[{ required: true, message: '' }]}
                         >
-                          <Input placeholder="Name" />
+                          <Input
+                            placeholder="Name"
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
                         </Form.Item>
-                        <Button
-                          danger
-                          type="text"
-                          onClick={() => {
-                            remove(name);
-                          }}
-                          style={{ marginTop: 5 }}
-                          icon={<DeleteOutlined />}
-                        />
                         <Form.Item
+                          layout="vertical"
                           label="Price"
-                          {...restField}
-                          name={[name, 'price']}
+                          name="pcPrice"
                           rules={[{ required: true, message: '' }]}
                         >
                           <InputNumber
@@ -308,84 +374,147 @@ export const CreateTemplate = () => {
                               gridTemplateColumns: '1fr',
                             }}
                             placeholder="Price"
-                            addonAfter="Kč"
+                            addonAfter={business?.currency}
                           />
                         </Form.Item>
                         <Form.Item
-                          {...restField}
-                          name={[name, 'section']}
+                          layout="vertical"
                           label="Section"
+                          name="pcSection"
                           rules={[{ required: true, message: '' }]}
                         >
                           <Select
                             allowClear={true}
                             placeholder="Section"
-                            {...sectionsSelectProps}
-                            options={sectionsQueryResult.data?.data.map(
-                              (section) => ({
-                                value: section.id,
-                                label: section.name,
-                              }),
-                            )}
+                            options={venueId ? filteredSections : []}
                           />
                         </Form.Item>
                         <Form.Item
-                          {...restField}
-                          name={[name, 'startDate']}
+                          layout="vertical"
                           label="Start Date"
+                          name="pcStart"
                         >
-                          <DatePicker
-                            format="D. M. YYYY"
-                            placeholder="Start Date"
-                            allowClear={true}
-                            needConfirm={false}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr',
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
                             }}
-                          />
+                          >
+                            <DatePicker
+                              onChange={(value) =>
+                                form.setFieldValue('pcStart', value)
+                              }
+                              showNow={false}
+                              format="D. M. YYYY"
+                              placeholder="Start Date"
+                              allowClear={true}
+                              needConfirm={false}
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr',
+                              }}
+                            />
+                          </div>
                         </Form.Item>
                         <Form.Item
-                          {...restField}
-                          name={[name, 'endDate']}
+                          layout="vertical"
                           label="End Date"
+                          name="pcEnd"
                         >
-                          <DatePicker
-                            format="D. M. YYYY"
-                            placeholder="End Date"
-                            allowClear={true}
-                            needConfirm={false}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr',
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
                             }}
-                          />
+                          >
+                            <DatePicker
+                              onChange={(value) =>
+                                form.setFieldValue('pcEnd', value)
+                              }
+                              showNow={false}
+                              format="D. M. YYYY"
+                              placeholder="End Date"
+                              allowClear={true}
+                              needConfirm={false}
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr',
+                              }}
+                            />
+                          </div>
                         </Form.Item>
-                      </Space>
-                      <Divider
-                        style={{ marginTop: 1 }}
-                        children={<EllipsisOutlined />}
-                      ></Divider>
-                    </Space>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      block
-                      icon={<PlusOutlined />}
-                    >
-                      Add Price Category
-                    </Button>
-                  </Form.Item>
-                  <Form.ErrorList
-                    errors={errors.map((error) => (
-                      <Text style={{ color: '#ad001d' }}>{error}</Text>
-                    ))}
-                  />
-                </>
-              )}
-            </Form.List>
+                        <Button
+                          type="dashed"
+                          block
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            form
+                              .validateFields([
+                                'pcName',
+                                'pcPrice',
+                                'pcSection',
+                                'pcStart',
+                                'pcEnd',
+                              ])
+                              .then(() => {
+                                const id = v4();
+                                const fields = form.getFieldsValue([
+                                  'pcName',
+                                  'pcSection',
+                                  'pcStart',
+                                  'pcEnd',
+                                  'pcPrice',
+                                ]);
+                                const updated = [
+                                  ...selectedPriceCategories,
+                                  {
+                                    label: `${form.getFieldValue('pcName')} - ${form.getFieldValue('pcPrice')} ${business?.currency}`,
+                                    value: id,
+                                    fields: fields,
+                                  },
+                                ];
+                                setSelectedPriceCategories(updated);
+                                form.setFieldsValue({
+                                  priceCategory: updated,
+                                });
+                                form.resetFields([
+                                  'pcName',
+                                  'pcSection',
+                                  'pcStart',
+                                  'pcEnd',
+                                  'pcPrice',
+                                ]);
+                              })
+                              .catch(() => {
+                                return;
+                              });
+                          }}
+                        >
+                          Add category
+                        </Button>
+                      </Flex>
+                    </div>
+                  )}
+                />
+              </Form.Item>
+              <Form.Item name="discount" label="Discounts">
+                <Select
+                  placement="topLeft"
+                  mode="multiple"
+                  labelRender={(item) => {
+                    const discount = discountsQuery.data?.data.find(
+                      (discount) => discount.id == item.value,
+                    );
+                    return `${discount?.name} - ${discount?.percentage} %`;
+                  }}
+                  options={discounts.options}
+                  placeholder="Discounts"
+                />
+              </Form.Item>
+            </Space>
+            <Form.Item name="posterUrl" label="Poster" hasFeedback>
+              <SupaUpload folder="posters" onUpload={handleUpload} />
+            </Form.Item>
           </Form>
         </Create>
       </Col>

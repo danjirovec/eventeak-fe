@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import { FabricJSCanvas, useFabricJSEditor } from 'fabricjs-react';
 import { fabric } from 'fabric';
-// import { render } from "@testing-library/react";
 import THEME from '../../util/globals';
 import {
   Button,
@@ -33,18 +32,14 @@ class RowGroup {
   spacing = -1;
   numberOfSeats = 0;
   seats = [];
-  category = 'None';
-  categoryColor = seatColor;
-  label = -1;
+  sectionName = 'None';
+  sectionColor = seatColor;
+  rowName = -1;
   startSeatsFrom = 1;
   group = null;
 }
 
-function addSeatToRow(
-  rowGroup,
-  direction /* 1 => add to end, -1 => add to start*/,
-  currSelectedActiveObj = null,
-) {
+function addSeatToRow(rowGroup, direction, currSelectedActiveObj = null) {
   if (!rowGroup) return null;
 
   const start = rowGroup.seats[0];
@@ -58,8 +53,6 @@ function addSeatToRow(
 
   const posX = direction == 1 ? rowGroup.endX : rowGroup.startX;
   const posY = direction == 1 ? rowGroup.endY : rowGroup.startY;
-
-  // add in direction of group unit vector
   const c = 2 * r + rowGroup.spacing / 2;
   const pos = [
     posX + c * directionUnitVector[0] * direction,
@@ -70,15 +63,10 @@ function addSeatToRow(
     radius: r,
     left: pos[0],
     top: pos[1],
-    fill: rowGroup.categoryColor,
+    fill: rowGroup.sectionColor,
     hasControls: false,
     hasBorders: false,
     hasRotatingPoint: false,
-    // angle: currSelectedActiveObj ? currSelectedActiveObj.angle : start.angle,
-    //       scaleX: currSelectedActiveObj ? currSelectedActiveObj.scaleX : start.scaleX,
-    //       scaleY: currSelectedActiveObj ? currSelectedActiveObj.scaleY : start.scaleY,
-    //       zoomX: currSelectedActiveObj ? currSelectedActiveObj.zoomX : start.zoomX,
-    //       zoomY: currSelectedActiveObj ? currSelectedActiveObj.zoomY : start.zoomY,
     originX: 'center',
     originY: 'center',
   });
@@ -112,10 +100,7 @@ const r = 7;
 const spacing = 2.5;
 const rowSpacing = 10;
 
-let categories = [['None', seatColor]];
-
-// Improve perfomance by handle calnvas state outside the component
-
+let sections = [['None', seatColor]];
 let addRowClicked = 0;
 let addRowSegmentedClicked = 0;
 let addMultilineRowClicked = 0;
@@ -133,7 +118,6 @@ let currentMulitlineRowId = -1;
 let currentGroupNumberOfSeats = 0;
 
 const currSelectedGoupObj = null;
-// track pos of active selection
 let lastActiveSelectionPos = [-1, -1];
 
 let startingSeat_1 = null;
@@ -147,8 +131,6 @@ type KeyValueObject = {
 
 const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   const { jsonData } = props;
-
-  console.log(jsonData);
 
   useImperativeHandle(ref, () => ({
     getData() {
@@ -164,11 +146,11 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   const [currSelectedGoup, setCurrSelectedGroup] = useState([]);
   const [currSelectedPrimitive, setCurrSelectedPrimitive] = useState([]);
 
-  const [categoryName, setCategoryName] = useState('');
+  const [sectionName, setSectionName] = useState('');
   const [rerender, setRerender] = useState(0);
-  const [rowLabel, setRowLabel] = useState('');
+  const [rowName, setRowName] = useState('');
   const [startingSeat, setStartingSeat] = useState(1);
-  const [categoryColor, setCategoryColor] = useState('#000');
+  const [sectionColor, setSectionColor] = useState('#000');
   const [rowAngle, setRowAngle] = useState(0);
 
   const canvasDivRef = useRef(null);
@@ -177,26 +159,23 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   const primRotIn = useRef(null);
 
   useEffect(() => {
-    console.log('yo');
     firstTime = false;
-    categories = [['None', seatColor]];
+    sections = [['None', seatColor]];
   }, []);
 
   const sectionAdded = (type: NotificationType) => {
     api[type]({
-      message: 'Section Added',
+      message: 'Section added',
     });
   };
   const rowsLabeled = (type: NotificationType) => {
     api[type]({
-      message: 'Rows Labeled',
+      message: 'Rows named',
     });
   };
   const sectionAddFailed = (type: NotificationType) => {
     api[type]({
-      message: 'Failed To Add Section',
-      description:
-        "Section couldn't be added because section with entered name already exists",
+      message: 'Section with this name already exists',
     });
   };
 
@@ -215,12 +194,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       originX: 'center',
       originY: 'center',
     });
-
     rect.groupId = [];
-
-    // rect.groupId = currentGroupId;
-    // currentGroupId += 1
-
     editor.canvas.add(rect);
     editor.canvas.sendToBack(rect);
     editor.canvas.requestRenderAll();
@@ -237,9 +211,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       fontFamily: 'Inconsolata',
     });
     text.groupId = [];
-    // text.groupId = currentGroupId;
-    // currentGroupId += 1
-
     editor.canvas.add(text);
     editor.canvas.requestRenderAll();
   };
@@ -278,7 +249,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     lastActiveSelectionPos = [group.group.left, group.group.top];
 
     setCurrSelectedGroup([currSelectedGoup[0]]);
-    setRowLabel(groups[currSelectedGoup[0]].label);
+    setRowName(groups[currSelectedGoup[0]].rowName);
     setStartingSeat(groups[currSelectedGoup[0]].startSeatsFrom);
   };
 
@@ -297,7 +268,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     lastActiveSelectionPos = [group.group.left, group.group.top];
 
     setCurrSelectedGroup([currSelectedGoup[0]]);
-    setRowLabel(groups[currSelectedGoup[0]].label);
+    setRowName(groups[currSelectedGoup[0]].rowName);
     setStartingSeat(groups[currSelectedGoup[0]].startSeatsFrom);
   };
 
@@ -353,7 +324,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
         const seats = [];
 
         for (let i = 0; i < numOfRows; ++i) {
-          // add Row
           for (let j = 0; j < group.numberOfSeats; ++j) {
             const pos = [
               n[0] * (rowSpacing + 2 * r) * (i + 1) +
@@ -452,7 +422,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
             evented: false,
             selectable: false,
           });
-          seat.groupId = currentGroupId; // used to know wich group this seat belongs to
+          seat.groupId = currentGroupId;
           if (i == numbrOfCircles - 1) seat.isEnd = true;
           editor.canvas.add(seat);
           seats.push(seat);
@@ -492,7 +462,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
         editor.canvas.remove(prevSeat);
       }
 
-      // add preview to where the first seat will be
       const _previewSeat = new fabric.Circle({
         radius: r,
         left: pos.x,
@@ -511,7 +480,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       _previewSeat.preview = true;
       editor.canvas.add(_previewSeat);
       editor.canvas.renderAll();
-      // setPreviewSeat(_previewSeat);
     }
     if (firstAddRowClicked) {
       const prev = time;
@@ -548,21 +516,14 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       const x = pos.x;
       const y = pos.y;
       if (!firstAddRowClicked) {
-        // remove preview seat which is last object
-
         const prevSeat =
           editor.canvas.getObjects()[editor.canvas.getObjects().length - 1];
         if (prevSeat && prevSeat.preview) editor.canvas.remove(prevSeat);
-
         firstAddRowClicked = 1;
-        // get first pos of first seat
-
         prevSeatPosX = x;
         prevSeatPosY = y;
-
         const startX = x;
         const startY = y;
-
         const seat = new fabric.Circle({
           radius: r,
           left: startX,
@@ -590,8 +551,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
             Math.abs(prevSeatPosX - x) < 10 &&
             Math.abs(prevSeatPosY - y) < 10
           ) {
-            // clicked on end seat
-            // end the segmented row
             currentSeatsInRow = [];
             firstAddRowClicked = 0;
             addRowSegmentedClicked = 0;
@@ -601,7 +560,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
             endRowPos = [-1, -1];
             directionUnitVector = [-1, -1];
           } else {
-            // dont add group but start new row
             startRowPos = [endRowPos[0], endRowPos[1]];
             currentSeatsInRow = []; //TODO:
             prevSeatPosX = endRowPos[0];
@@ -609,7 +567,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
           }
         } else if (addMultilineRowClicked) {
           if (addMultilineRowClicked == 1) {
-            // phase 1 the first row is added need to add all other rows
             addMultilineRowClicked = 2;
             const group = new RowGroup();
             group.groupId = currentMulitlineRowId;
@@ -655,13 +612,8 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
 
             if (!prevGroup) return;
             editor.canvas.requestRenderAll();
-            // add all the rows, the are ordered
-            // seats = [ seat_group1_start,......., seat_group1_end, ......,seat_groupn_start, ... seat_groupn_end  ];
-
             for (const seat of currentSeatsInRow) {
-              //
               if (seat.isStart) {
-                // create new group
                 const group = new RowGroup();
                 group.groupId = seat.groupId;
                 group.startX = seat.left;
@@ -673,7 +625,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
                 group.seats.push(seat);
               } else {
                 const group = groups[seat.groupId];
-                //
                 group.seats.push(seat);
               }
 
@@ -684,7 +635,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
 
                 const sel = new fabric.ActiveSelection(group.seats, {
                   canvas: editor.canvas,
-                  // angle: 90,
                   originX: 'center',
                   originY: 'center',
                   lockScalingFlip: true,
@@ -724,9 +674,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
             currentMulitlineRowId = -1;
           }
         } else if (addRowClicked) {
-          // orig = g.calcTransformMatrix();
-          // g.groupId = currentGroupId;
-
           const group = new RowGroup();
           group.groupId = currentGroupId;
           group.startX = startRowPos[0];
@@ -740,20 +687,8 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
 
           if (startingSeat_1) group.seats.push(startingSeat_1);
           for (const seat of currentSeatsInRow) group.seats.push(seat);
-
-          // const g = new fabric.Group(group.seats, {
-          //   left: group.seats[0].startX,
-          //   top: group.seats[0].startY,
-          //   originX:'center',
-          //   originY:'center',
-          //   angle: 0
-          // });
-
-          // for(let seat of group.seats) editor.canvas.remove(seat);
-
           const sel = new fabric.ActiveSelection(group.seats, {
             canvas: editor.canvas,
-            // angle: 90,
             originX: 'center',
             originY: 'center',
             lockScalingFlip: true,
@@ -861,28 +796,19 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       editor.canvas.getActiveObject().set('lockSkewingY', true);
       editor.canvas.getActiveObject().set('lockUniScaling', true);
       editor.canvas.getActiveObject().set('hasBorders', false);
-
-      // editor.canvas.getActiveObject().set("hasBorders", false);
-      // editor.canvas.getActiveObject().set("hasControls", false);
-      // editor.canvas.getActiveObject().set("hasRotatingPoint", true);
     }
     editor.canvas.getActiveObject().set('groupId', groupIdsSelected);
-    // editor.canvas.getActiveObject().set("originX","center")
-
-    // lastActiveSelectionPos = [editor.canvas.getActiveObject().left+editor.canvas.getActiveObject().width/2, editor.canvas.getActiveObject().top+editor.canvas.getActiveObject().height/2];
-
     editor.canvas.renderAll();
 
     setCurrSelectedGroup([...groupIdsSelected]);
     setCurrSelectedPrimitive([...primitives]);
     if (groupIdsSelected.length > 0 && groups[groupIdsSelected[0]]) {
-      setRowLabel(groups[groupIdsSelected[0]].label);
+      setRowName(groups[groupIdsSelected[0]].rowName);
       setStartingSeat(groups[groupIdsSelected[0]].startSeatsFrom);
     }
   };
 
   const handleObjectTransfromation = (e) => {
-    console.log('handleObjectTransfromation');
     const gids = e.target.groupId;
     let posNew = [];
     if (gids.length > 0) {
@@ -902,7 +828,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       for (const gid of gids) {
         const group = groups[gid];
         if (!group) continue;
-        setRowLabel(groups[gid].label);
+        setRowName(groups[gid].rowName);
         setStartingSeat(groups[gid].startSeatsFrom);
 
         if (e.action == 'drag') {
@@ -950,24 +876,14 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
           group.startY = y1;
           group.endX = x2;
           group.endY = y2;
-
-          // group.endX = norm_a * Math.cos(alpha_2_rad) * Math.cos(theta) + lastActiveSelectionCenter[0];
-          // group.endY = lastActiveSelectionCenter[1] - norm_a * Math.sin(alpha_2_rad) * Math.cos(theta);
-
           group.directionUnitVector = calculateUnitVector(
             [group.startX, group.startY],
             [group.endX, group.endY],
           );
-
-          // group.startY += d[1];
-          // group.endX += d[0];
-          // group.endY += d[1];
-          // lastActiveSelectionPos = [...posNew];
         }
       }
     }
     lastActiveSelectionPos = [...posNew];
-    // editor.canvas.discardActiveObject()
   };
 
   const handleWindowClick = (e) => {
@@ -981,19 +897,12 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   };
 
   if (editor && !firstTime) {
-    console.log('acutal ini');
     firstTime = true;
     const width = canvasDivRef.current.clientWidth;
     const height = canvasDivRef.current.clientHeight;
-    // window.addEventListener("resize", () => setRerender(prev => !prev))
-    //
-    // if (editor.canvas.width < 1000) {
-    //
-    // editor.canvas.renderOnAddRemove = false;
     editor.canvas.setWidth(width);
     editor.canvas.setHeight(height);
     editor.canvas.setBackgroundColor(canvasBackGround);
-    // }
     editor.canvas.off('mouse:down');
     editor.canvas.on('mouse:down', (e) => handleMouseClick(e.e));
 
@@ -1031,59 +940,37 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       opt.e.stopPropagation();
       editor.canvas.requestRenderAll();
     });
-
-    // editor.canvas.getElement().removeEventListener("keydown", handleWindowClick);
-    // window.addEventListener("keydown", handleWindowClick);
-    // editor.canvas.getElement().addEventListener("click",()=>
     editor.canvas.remove('mouse:up');
     editor.canvas.on('mouse:up', function (opt) {
-      // on mouse up we want to recalculate new interaction
-      // for all objects, so we call setViewportTransform
       editor.canvas.setViewportTransform(editor.canvas.viewportTransform);
       editor.canvas.isDragging = false;
       editor.canvas.selection = true;
     });
-
-    // window.removeEventListener("keydown",)
-
     editor.canvas.renderAll();
-
     editor.canvas.preserveObjectStacking = true;
   }
 
   const getNumberOfSeatsInGroup = () => {
     if (currSelectedGoup.length != 1) return 0;
-
     const group = groups[currSelectedGoup[0]];
-
     if (!group) return 0;
-
     return group.numberOfSeats;
   };
 
   const getSpacingGroup = () => {
     if (currSelectedGoup.length != 1) return 0;
-
     const group = groups[currSelectedGoup[0]];
-
     if (!group) return 0;
-
     return group.spacing;
   };
 
   const handleChangeNumberOfSeats = (value) => {
     const newNum = Math.floor(Number(value)) - 1;
     if (newNum < 0) return;
-
     if (currSelectedGoup.length != 1) return 0;
-
     const group = groups[currSelectedGoup[0]];
-
     if (!group) return 0;
-
     editor.canvas.requestRenderAll();
-
-    // only start and end will remain in same pos, so we remove all other
     const startObj = group.seats[0];
 
     for (const obj of group.seats) {
@@ -1091,9 +978,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
         group.group.removeWithUpdate(obj);
       }
     }
-
     if (!startObj) return;
-
     group.seats = [startObj];
     group.numberOfSeats = 1;
     group.endX = group.startX;
@@ -1104,11 +989,8 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       if (!seat) return;
       group.group.addWithUpdate(seat);
     }
-
     editor.canvas.renderAll();
-
     lastActiveSelectionPos = [group.group.left, group.group.top];
-
     setRerender((prev) => !prev);
   };
 
@@ -1118,15 +1000,9 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     let newSpacing = Math.floor(Number(value));
     if (newSpacing > maxSpacing) newSpacing = maxSpacing;
     if (newSpacing < minSpacing) newSpacing = minSpacing;
-
-    // only startObj is reserved
-
     const group = groups[currSelectedGoup[0]];
-
     if (!group) return 0;
     editor.canvas.requestRenderAll();
-
-    // only start will remain in same pos, so we remove all other
     const startObj = group.seats[0];
     for (const obj of group.seats) {
       if (!obj.isStart) group.group.removeWithUpdate(obj);
@@ -1156,21 +1032,17 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   };
 
   const onDeleteRow = () => {
-    setRowLabel(-1);
+    setRowName(-1);
     setStartingSeat(1);
     editor.canvas.discardActiveObject();
     editor.canvas.requestRenderAll();
 
     for (const gid of currSelectedGoup) {
       const group = groups[gid];
-
       if (!group) continue;
-
       editor.canvas.remove(group.group);
-
       groups[gid] = null;
       delete groups[gid];
-      //
     }
 
     for (const primitive of currSelectedPrimitive) {
@@ -1192,40 +1064,36 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     sel.groupId = [gid];
     editor.canvas._setActiveObject(sel);
     lastActiveSelectionPos = [sel.left, sel.top];
-
     editor.canvas.requestRenderAll();
-
     setCurrSelectedGroup([gid]);
   };
 
   const onAutomaticRowLabeling = () => {
-    let label = 1;
+    let rowName = 1;
     for (const key in groups) {
       if (!groups[key]) continue;
       if (currSelectedGoup.length == 1 && currSelectedGoup[0] == key)
-        setRowLabel(label);
-      groups[key].label = label;
-      label += 1;
+        setRowName(rowName);
+      groups[key].rowName = rowName;
+      rowName += 1;
     }
     rowsLabeled('success');
   };
 
-  const getLabel = () => {
+  const getRowName = () => {
     if (currSelectedGoup.length != 1 || !groups[currSelectedGoup[0]]) return;
-    return groups[currSelectedGoup[0]].label
-      ? groups[currSelectedGoup[0]].label
+    return groups[currSelectedGoup[0]].rowName
+      ? groups[currSelectedGoup[0]].rowName
       : -1;
   };
 
   const handleChangeRowLabel = (e) => {
     if (currSelectedGoup.length != 1 || !groups[currSelectedGoup[0]]) return;
-    groups[currSelectedGoup[0]].label = e.target.value;
-    setRowLabel(e.target.value);
+    groups[currSelectedGoup[0]].rowName = e.target.value;
+    setRowName(e.target.value);
   };
 
   const onDuplicateRow = () => {
-    // if (currSelectedGoup.length != 1) return 0;
-
     editor.canvas.requestRenderAll();
 
     const newGroupsIds = [];
@@ -1252,9 +1120,9 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       newGroupObj.directionUnitVector = [...group.directionUnitVector];
       newGroupObj.numberOfSeats = group.numberOfSeats;
       newGroupObj.spacing = group.spacing;
-      newGroupObj.category = group.category;
-      newGroupObj.categoryColor = group.categoryColor;
-      newGroupObj.label = group.label;
+      newGroupObj.sectionName = group.sectionName;
+      newGroupObj.sectionColor = group.sectionColor;
+      newGroupObj.rowName = group.rowName;
       newGroupObj.startSeatsFrom = group.startSeatsFrom;
       groups[newGroupId] = newGroupObj;
 
@@ -1283,7 +1151,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
           radius: r,
           left: pos[0],
           top: pos[1],
-          fill: group.categoryColor,
+          fill: group.sectionColor,
           angle: x.angle,
           scaleX: x.scaleX,
           scaleY: x.scaleY,
@@ -1295,18 +1163,15 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
           originX: 'center',
           originY: 'center',
         });
-        seat.groupId = newGroupId; // used to know wich group this seat belongs to
+        seat.groupId = newGroupId;
         if (i == newGroupObj.numberOfSeats - 1) seat.isEnd = true;
         if (i == 0) seat.isStart = true;
         editor.canvas.add(seat);
         newGroupObj.seats.push(seat);
-
-        // selected.push(seat);
       }
       editor.canvas.discardActiveObject();
       const sel = new fabric.ActiveSelection(newGroupObj.seats, {
         canvas: editor.canvas,
-        // angle: 90,
         originX: 'center',
         originY: 'center',
         lockScalingFlip: true,
@@ -1395,32 +1260,32 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   };
 
   const onAddCategory = () => {
-    if (categoryName != '') {
-      for (const category of categories) {
-        if (category[0] == categoryName) {
+    if (sectionName != '') {
+      for (const section of sections) {
+        if (section[0] == sectionName) {
           sectionAddFailed('error');
           return;
         }
       }
       sectionAdded('success');
-      categories.push([categoryName, categoryColor]);
+      sections.push([sectionName, sectionColor]);
       setRerender(!rerender);
     }
   };
 
   const onCategoryNameChange = (e) => {
-    setCategoryName(e.target.value);
+    setSectionName(e.target.value);
   };
 
   const onCategoryColorChange = (value, hex) => {
-    setCategoryColor(hex);
+    setSectionColor(hex);
   };
 
   const onChangeSelectCategory = (value) => {
-    const category = value;
+    const section = value;
     let color = '';
-    for (const c of categories) {
-      if (c[0] == category) {
+    for (const c of sections) {
+      if (c[0] == section) {
         color = c[1];
         break;
       }
@@ -1428,12 +1293,12 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     for (const gid of currSelectedGoup) {
       const groupObjs = getGroup(gid);
       const group = groups[gid];
-      group.category = category;
-      group.categoryColor = color;
+      group.sectionName = section;
+      group.sectionColor = color;
       for (const obj of groupObjs) {
         obj.set('fill', color);
-        obj.category = category;
-        obj.categoryColor = color;
+        obj.sectionName = section;
+        obj.sectionColor = color;
       }
     }
     editor.canvas.requestRenderAll();
@@ -1444,7 +1309,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     if (currSelectedGoup.length != 1) return;
     const group = groups[currSelectedGoup[0]];
     if (!group) return;
-    if (group.category) return group.category;
+    if (group.sectionName) return group.sectionName;
     return 'None';
   };
 
@@ -1466,14 +1331,13 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       newGroups[key].seats = [];
       for (let i = 0; i < groups[key].numberOfSeats; ++i)
         newGroups[key].seats.push({
-          number: i + groups[key].startSeatsFrom,
+          seatNumber: i + groups[key].startSeatsFrom,
           reserved: false,
-          category: groups[key].category,
+          sectionName: groups[key].sectionName,
         });
       newGroups[key].group = null;
     }
     const primitives = [];
-    // add primitve objects
     for (const obj of editor.canvas.getObjects()) {
       if (obj.groupId && obj.groupId.length == 0) {
         primitives.push(obj.toJSON());
@@ -1481,10 +1345,10 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     }
     const myData = {
       groups: newGroups,
-      categories: categories,
+      sections: sections,
       primitives: primitives,
     };
-    categories = [['None', seatColor]];
+    sections = [['None', seatColor]];
     groups = {};
     return myData;
   };
@@ -1507,7 +1371,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     Object.keys(groups).forEach((key) => delete groups[key]);
 
     groups = {};
-    categories = [...jsonData.categories];
+    sections = [...jsonData.sections];
 
     for (const key in jsonData.groups) {
       groups[key] = { ...jsonData.groups[key] };
@@ -1518,8 +1382,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       const startFrom = jsonData.groups[key].startSeatsFrom;
       groups[key].seats = [];
 
-      // row label
-      const text = new fabric.Text(`${jsonData.groups[key].label}`, {
+      const text = new fabric.Text(`${jsonData.groups[key].rowName}`, {
         fontSize: r * 2,
         textAlign: 'center',
         originX: 'center',
@@ -1530,10 +1393,10 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
         fontFamily: 'Inconsolata',
       });
       editor.canvas.add(text);
-      // draw row
+
       for (let i = 0; i < numberOfSeats; ++i) {
         const seat = new fabric.Circle({
-          fill: jsonData.groups[key].categoryColor,
+          fill: jsonData.groups[key].sectionColor,
           top: pos[1],
           left: pos[0],
           radius: r,
@@ -1573,7 +1436,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   };
 
   const handleRowAngle = (e) => {
-    // if (currSelectedGoup.length != 1) return;
     const newAngle = Number(rowAngleInput.current.value);
     //
     editor.canvas.requestRenderAll();
@@ -1581,9 +1443,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     for (const gid of currSelectedGoup) {
       const group = groups[gid];
       if (!group) continue;
-
-      // const oldAngleRad = Math.atan(group.directionUnitVector[1]/(group.directionUnitVector[0]+0.000001))
-      // const oldAngle = oldAngleRad*180/Math.PI;
 
       group.directionUnitVector = [
         Math.cos(newAngleRad),
@@ -1608,8 +1467,6 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
         if (!seat) continue;
         group.group.addWithUpdate(seat);
       }
-      //
-      // group.group.rotate(newAngle-oldAngle+group.group.angle)
     }
 
     if (currSelectedGoup.length > 1) {
@@ -1649,7 +1506,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     editor.canvas.renderAll();
   };
 
-  const sectionOptions = categories.map((v) => ({
+  const sectionOptions = sections.map((v) => ({
     value: v[0],
     label: v[0],
   }));
@@ -1816,10 +1673,18 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
             </Space> */}
           </div>
 
-          <div ref={canvasDivRef} style={{ minHeight: '100vh' }}>
+          <div
+            ref={canvasDivRef}
+            style={{
+              minHeight: '500px',
+              maxHeight: '70vh',
+              height: '70vh',
+              width: '100%',
+            }}
+          >
             <FabricJSCanvas className="sample-canvas" onReady={onReady} />
           </div>
-          <div style={{ height: '100vh', paddingLeft: '24px' }}>
+          <div style={{ paddingLeft: '24px' }}>
             <h5
               style={{
                 fontWeight: 600,
@@ -1866,11 +1731,11 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
                       alignItems: 'flex-start',
                     }}
                   >
-                    <label style={{ display: 'block' }}>Row Label</label>
+                    <label style={{ display: 'block' }}>Row Name</label>
                     <Input
                       style={{ width: 150 }}
                       onChange={handleChangeRowLabel}
-                      value={rowLabel}
+                      value={rowName}
                     />
                   </Space>
                 </Space>

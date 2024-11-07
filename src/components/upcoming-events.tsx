@@ -1,5 +1,5 @@
 import { CalendarOutlined, RightCircleOutlined } from '@ant-design/icons';
-import { Button, Card, List } from 'antd';
+import { Button, Card, Flex, List } from 'antd';
 import React from 'react';
 import { Text } from './text';
 import UpcomingEventsSkeleton from './skeleton/upcoming-events';
@@ -31,12 +31,12 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
         body: { padding: '0 1rem' },
       }}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Flex align="center" gap={8}>
           <CalendarOutlined />
           <Text size="sm" style={{ marginLeft: '0.7rem' }}>
             Next up
           </Text>
-        </div>
+        </Flex>
       }
       extra={
         dashboard && (
@@ -81,7 +81,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
                 <List.Item.Meta
                   avatar={
                     <ColorBadge
-                      color={getEventColor(item.category).background}
+                      color={getEventColor(item.template.category).background}
                     />
                   }
                   title={
@@ -92,7 +92,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({
                   }
                   description={
                     <>
-                      <CategoryTag category={item.category} />
+                      <CategoryTag category={item.template.category} />
                       <Text ellipsis={{ tooltip: true }} strong>
                         {item.name}
                       </Text>

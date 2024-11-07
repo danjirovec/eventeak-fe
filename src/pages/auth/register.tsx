@@ -8,7 +8,7 @@ import {
   useRouterContext,
   useRegister,
 } from '@refinedev/core';
-import { ThemedTitleV2, useStepsForm } from '@refinedev/antd';
+import { useStepsForm } from '@refinedev/antd';
 import {
   layoutStyles,
   containerStyles,
@@ -32,10 +32,11 @@ import {
   theme,
   DatePicker,
   Steps,
+  Flex,
 } from 'antd';
-import { SVGLogo } from 'components/layout/svg-logo';
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { requiredOptionalMark } from 'components/requiredMark';
+import logo from 'assets/eventeak.png';
 
 const { Text, Title } = Typography;
 const { useToken } = theme;
@@ -58,8 +59,10 @@ export const RegisterPage: React.FC<RegisterProps> = ({
   const routerType = useRouterType();
   const Link = useLink();
   const { Link: LegacyLink } = useRouterContext();
-  useDocumentTitle('Register - Applausio');
+  useDocumentTitle('Register - Eventeak');
   const [user, setUser] = useState({});
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const ActiveLink = routerType === 'legacy' ? LegacyLink : Link;
 
@@ -79,7 +82,9 @@ export const RegisterPage: React.FC<RegisterProps> = ({
         }}
       >
         {title ?? (
-          <ThemedTitleV2 collapsed={false} text="Applausio" icon={SVGLogo} />
+          <ActiveLink to="/">
+            <img src={logo} />
+          </ActiveLink>
         )}
       </div>
     );
@@ -100,7 +105,7 @@ export const RegisterPage: React.FC<RegisterProps> = ({
     const dataToSubmit = {
       ...user,
       ...values,
-      role: 0, // Admin
+      role: 0,
     };
     register(dataToSubmit);
   };
@@ -155,7 +160,6 @@ export const RegisterPage: React.FC<RegisterProps> = ({
       <Form.Item
         label="First Name"
         name="firstName"
-        hasFeedback
         style={{ width: '100%' }}
         rules={[
           { required: true, message: '' },
@@ -171,7 +175,6 @@ export const RegisterPage: React.FC<RegisterProps> = ({
       <Form.Item
         label="Last Name"
         name="lastName"
-        hasFeedback
         rules={[
           { required: true, message: '' },
           { whitespace: true, message: '' },
@@ -186,7 +189,6 @@ export const RegisterPage: React.FC<RegisterProps> = ({
       <Form.Item
         label="Place of Residence"
         name="placeOfResidence"
-        hasFeedback
         rules={[
           { whitespace: true, message: '' },
           {
@@ -200,17 +202,17 @@ export const RegisterPage: React.FC<RegisterProps> = ({
       <Form.Item
         label="Birth Date"
         name="birthDate"
-        hasFeedback
         style={{ display: 'grid', gridTemplateColumns: '1fr' }}
         rules={[
           { required: true, message: '' },
           {
             type: 'date',
-            message: 'Invalid date',
+            message: '',
           },
         ]}
       >
         <DatePicker
+          showNow={false}
           format="DD/MM/YYYY"
           placeholder="Birth Date"
           allowClear={true}
@@ -222,12 +224,11 @@ export const RegisterPage: React.FC<RegisterProps> = ({
       <Form.Item
         name="email"
         label="Email"
-        hasFeedback
         rules={[
           { required: true, message: '' },
           {
             type: 'email',
-            message: 'Invalid email address',
+            message: '',
           },
         ]}
       >
@@ -237,7 +238,6 @@ export const RegisterPage: React.FC<RegisterProps> = ({
         name="password"
         label="Password"
         validateTrigger={['onChange', 'onBlur']}
-        hasFeedback
         rules={[
           { required: true, message: '' },
           {
@@ -259,12 +259,18 @@ export const RegisterPage: React.FC<RegisterProps> = ({
           { min: 8, message: 'Password must be 8 characters long' },
         ]}
       >
-        <Input type="password" placeholder="●●●●●●●●" />
+        <Input.Password
+          visibilityToggle={{
+            visible: passwordVisible,
+            onVisibleChange: setPasswordVisible,
+          }}
+          type="password"
+          placeholder="Password"
+        />
       </Form.Item>
       <Form.Item
         name="confirmPassword"
         label="Confirm Password"
-        hasFeedback
         dependencies={['password']}
         rules={[
           { required: true, message: '' },
@@ -278,7 +284,14 @@ export const RegisterPage: React.FC<RegisterProps> = ({
           }),
         ]}
       >
-        <Input type="password" placeholder="●●●●●●●●" />
+        <Input.Password
+          visibilityToggle={{
+            visible: confirmPasswordVisible,
+            onVisibleChange: setConfirmPasswordVisible,
+          }}
+          type="password"
+          placeholder="Confirm Password"
+        />
       </Form.Item>
     </>,
   ];
@@ -427,6 +440,19 @@ export const RegisterPage: React.FC<RegisterProps> = ({
               {CardContent}
             </>
           )}
+          <Flex style={{ marginTop: 10 }} justify="center">
+            <Text>
+              <ActiveLink
+                to="/conditions"
+                style={{
+                  fontWeight: '400',
+                  color: 'grey',
+                }}
+              >
+                {' Privacy Policy'}
+              </ActiveLink>
+            </Text>
+          </Flex>
         </Col>
       </Row>
     </Layout>

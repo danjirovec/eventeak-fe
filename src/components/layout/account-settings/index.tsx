@@ -37,9 +37,9 @@ import { useEffect, useState } from 'react';
 import { USER_BUSINESSES_QUERY, USER_QUERY } from 'graphql/queries';
 import { SingleElementForm } from 'components/single-form-element';
 import { useSelect } from '@refinedev/antd';
-import { getAuth } from 'util/get-auth';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadEdit } from 'components/upload/util';
+import { useGlobalStore } from 'providers/context/store';
 
 type Props = {
   opened: boolean;
@@ -56,6 +56,7 @@ type FormKeys =
   | 'password';
 
 export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
+  const user = useGlobalStore((state) => state.user);
   const [activeForm, setActiveForm] = useState<FormKeys>();
   const [formData, setFormData] = useState<FormData | null>(new FormData());
   const [savingImg, setSavingImg] = useState(false);
@@ -75,7 +76,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
     },
   });
 
-  const { selectProps, queryResult } = useSelect<
+  const { selectProps, query } = useSelect<
     GetFieldsFromList<UserBusinessesListQuery>
   >({
     resource: 'businessUsers',
@@ -92,7 +93,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
       {
         field: 'user.id',
         operator: 'eq',
-        value: getAuth().userId,
+        value: user?.id,
       },
       {
         field: 'role',
@@ -449,7 +450,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
             <Select
               placeholder="Business"
               {...selectProps}
-              options={queryResult.data?.data.map((business) => ({
+              options={query.data?.data.map((business) => ({
                 value: business.business.id,
                 label: business.business.name,
               }))}
