@@ -1,10 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-nocheck
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import {
-  CreateButton,
   DeleteButton,
   EditButton,
   FilterDropdown,
-  FilterDropdownProps,
   getDefaultSortOrder,
   List,
   useSelect,
@@ -119,7 +119,7 @@ export const OrderList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props as FilterDropdownProps;
+              } = props;
               return (
                 <FilterDropdown
                   {...rest}

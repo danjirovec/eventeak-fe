@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-nocheck
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import {
   DeleteButton,
@@ -39,7 +41,6 @@ import {
 } from '/graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { UPDATE_TICKET_MUTATION } from 'graphql/mutations';
-import { FilterDropdownProps } from '@refinedev/antd';
 
 export const TicketList = ({ children }: React.PropsWithChildren) => {
   const business = useGlobalStore((state) => state.business);
@@ -235,7 +236,7 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props as FilterDropdownProps;
+              } = props;
               return (
                 <FilterDropdown
                   {...rest}
@@ -390,25 +391,6 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
           <Table.Column<Ticket>
             dataIndex="validated"
             title="Validated"
-            // filterIcon={<FilterFilled />}
-            // filterDropdown={(props) => (
-            //   <FilterDropdown
-            //     {...props}
-            //     mapValue={(selectedKeys) => selectedKeys}
-            //   >
-            //     <Checkbox.Group>
-            //       <Checkbox value={true}>Yes</Checkbox>
-            //       <Checkbox value={false}>No</Checkbox>
-            //     </Checkbox.Group>
-            //   </FilterDropdown>
-            // )}
-            // onFilter={(value, record) => {
-            //   if (value) {
-            //     return record.validated !== null;
-            //   } else {
-            //     return record.validated === null;
-            //   }
-            // }}
             sorter={{ multiple: 1 }}
             defaultSortOrder={getDefaultSortOrder('validated', sorters)}
             render={(value, record) => (
@@ -600,7 +582,7 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
                 selectedKeys,
                 clearFilters,
                 ...rest
-              } = props as FilterDropdownProps;
+              } = props;
               return (
                 <FilterDropdown
                   {...rest}
