@@ -205,7 +205,6 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
         (localTicket) =>
           !tickets.some((ticket) => ticket.id === localTicket.id),
       );
-      console.log(removedTickets);
       clearTickets(removedTickets);
       setLocalTickets(tickets);
       canvas.requestRenderAll();
@@ -219,13 +218,16 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
+    console.log('eventData useEffect', firstTime, canvas, json);
   }, [eventData]);
 
   useEffect(() => {
     if (!firstTime) {
+      console.log('main useEffect firstTime is FALSE')
       firstTime = true;
       return;
     }
+    console.log('main useEffect firstTime is TRUE');
     canvas = initCanvas();
     const width = canvasDivRef.current.clientWidth;
     const height = canvasDivRef.current.clientHeight;
@@ -278,6 +280,7 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
     canvas.renderOnAddRemove = false;
 
     if (eventData) {
+      console.log('main useEffect eventData exist')
       loadDesign(eventData.seatMap);
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
