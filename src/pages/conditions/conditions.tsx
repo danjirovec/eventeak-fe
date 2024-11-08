@@ -1,5 +1,6 @@
 import React from 'react';
-import { Collapse, CollapseProps, Flex, Layout } from 'antd';
+import { Button, Collapse, CollapseProps, Flex, Layout } from 'antd';
+import { useNavigation } from '@refinedev/core';
 
 const items: CollapseProps['items'] = [
   {
@@ -125,6 +126,7 @@ const items: CollapseProps['items'] = [
 ];
 
 const Conditions = () => {
+  const { replace } = useNavigation();
   return (
     <Layout
       style={{
@@ -141,8 +143,9 @@ const Conditions = () => {
         align="flex-start"
         gap={10}
       >
-        <Flex style={{ width: '100%' }}>
+        <Flex style={{ width: '100%' }} justify="space-between">
           <h2>Privacy Policy</h2>
+          <Button onClick={() => replace('/login')}>Go Back</Button>
         </Flex>
         <Flex style={{ width: '100%' }}>
           <Collapse style={{ width: '100%' }} items={items}></Collapse>

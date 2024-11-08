@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { notification } from 'antd';
 
 let rows = {};
-let firstTime = false;
 let canvas = null;
 let json = null;
 let globalZoom = 0;
@@ -218,16 +217,9 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
-    console.log('eventData useEffect', firstTime, canvas, json);
   }, [eventData]);
 
   useEffect(() => {
-    // if (!firstTime) {
-    //   console.log('main useEffect firstTime is FALSE')
-    //   firstTime = true;
-    //   return;
-    // }
-    console.log('main useEffect firstTime is TRUE');
     canvas = initCanvas();
     const width = canvasDivRef.current.clientWidth;
     const height = canvasDivRef.current.clientHeight;
@@ -280,12 +272,10 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
     canvas.renderOnAddRemove = false;
 
     if (eventData) {
-      console.log('main useEffect eventData exist')
       loadDesign(eventData.seatMap);
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
-    firstTime = false;
   }, []);
 
   const handleSelectionClear = (tickets) => {
