@@ -222,11 +222,11 @@ const SeatReservation = ({ eventData, tickets, setTickets, removed }) => {
   }, [eventData]);
 
   useEffect(() => {
-    if (!firstTime) {
-      console.log('main useEffect firstTime is FALSE')
-      firstTime = true;
-      return;
-    }
+    // if (!firstTime) {
+    //   console.log('main useEffect firstTime is FALSE')
+    //   firstTime = true;
+    //   return;
+    // }
     console.log('main useEffect firstTime is TRUE');
     canvas = initCanvas();
     const width = canvasDivRef.current.clientWidth;
