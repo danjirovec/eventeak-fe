@@ -1,60 +1,26 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-
-import { useOne, useParsed } from '@refinedev/core';
 import { fabric } from 'fabric';
 import { useEffect, useRef, useState } from 'react';
 import THEME from 'util/globals';
 import { v4 as uuidv4 } from 'uuid';
-import { example } from './idk';
 import { Button } from 'antd';
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 
 let rows = {};
-let firstTime = false;
+// let firstTime = false;
 let canvas = null;
 let json = null;
 const r = 7;
-// const eventData = example;
 let startPointer = null;
 let isDragging = false;
 const sensitivity = 0.5;
 
-type params = {
-  eventId: string;
-};
-
 export const Map = () => {
   const canvasDivRef = useRef(null);
   const [tickets, setTickets] = useState([]);
-  const { params } = useParsed<params>();
-  const eventId = params?.eventId;
 
   const seatMap = JSON.parse(window.seatMap);
-
-
-  // const { data, isLoading, error } = useOne({
-  //   resource: 'events',
-  //   id: eventId,
-  //   meta: {
-  //     fields: ['seatMap'],
-  //   },
-  // });
-
-  // const seatMap = data?.data.seatMap;
-
-  // if (error) {
-  //   alert(typeof eventId);
-  // }
-
-  // if (window.seatMap) {
-  //   const yo = JSON.parse(window.seatMap);
-  //   try {
-  //     alert(yo.primitives[0].type);
-  //   } catch (error) {
-  //     alert(error);
-  //   }
-  // }
 
   window.addEventListener('resize', () => {
     if (canvasDivRef && canvasDivRef.current && canvas) {
@@ -312,7 +278,7 @@ export const Map = () => {
     const found = selected.find((item) => item.id == seat.id);
 
     if (!found) {
-      seat.fill = 'red';
+      seat.fill = '#CE9E19';
       const updated = [...selected, seat];
       setTickets(updated);
       window.ReactNativeWebView.postMessage(JSON.stringify(serialize(updated)));
