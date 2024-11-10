@@ -125,7 +125,11 @@ export const CloneBenefit = () => {
               name="membershipTypeId"
               label="Membership Type"
               style={{ width: '100%' }}
-              initialValue={formProps?.initialValues?.membershipType.id}
+              initialValue={
+                formProps?.initialValues?.membershipType
+                  ? formProps?.initialValues?.membershipType.id
+                  : null
+              }
             >
               <Select
                 style={{ width: '100%' }}

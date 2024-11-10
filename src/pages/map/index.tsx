@@ -15,7 +15,7 @@ let firstTime = false;
 let canvas = null;
 let json = null;
 const r = 7;
-const eventData = example;
+// const eventData = example;
 let startPointer = null;
 let isDragging = false;
 const sensitivity = 0.5;
@@ -30,13 +30,31 @@ export const Map = () => {
   const { params } = useParsed<params>();
   const eventId = params?.eventId;
 
-  const { data, isLoading } = useOne({
-    resource: 'events',
-    id: eventId,
-    queryOptions: {
-      enabled: !!eventId,
-    },
-  });
+  const seatMap = JSON.parse(window.seatMap);
+
+
+  // const { data, isLoading, error } = useOne({
+  //   resource: 'events',
+  //   id: eventId,
+  //   meta: {
+  //     fields: ['seatMap'],
+  //   },
+  // });
+
+  // const seatMap = data?.data.seatMap;
+
+  // if (error) {
+  //   alert(typeof eventId);
+  // }
+
+  // if (window.seatMap) {
+  //   const yo = JSON.parse(window.seatMap);
+  //   try {
+  //     alert(yo.primitives[0].type);
+  //   } catch (error) {
+  //     alert(error);
+  //   }
+  // }
 
   window.addEventListener('resize', () => {
     if (canvasDivRef && canvasDivRef.current && canvas) {
@@ -67,7 +85,7 @@ export const Map = () => {
       rows[key].seats = json.rows[key].seats;
 
       // row label
-      const text = new fabric.Text(`${json.rows[key].label}`, {
+      const text = new fabric.Text(`${json.rows[key].rowName}`, {
         fontSize: r * 2,
         textAlign: 'bottom',
         originX: 'center',
@@ -94,7 +112,7 @@ export const Map = () => {
       // draw row
       for (let i = 0; i < numberOfSeats; ++i) {
         const seat = new fabric.Circle({
-          fill: json.rows[key].categoryColor,
+          fill: json.rows[key].sectionColor,
           top: pos[1],
           left: pos[0],
           radius: r,
@@ -139,19 +157,21 @@ export const Map = () => {
         seat.isStart = false;
         seat.isEnd = false;
         seat.id = uuidv4();
-        seat.sectionName = json.rows[key].seats[i].category ?? null;
+        seat.sectionName = json.rows[key].seats[i].sectionName ?? null;
         seat.sectionId = json.rows[key].seats[i].sectionId ?? null;
-        seat.sectionColor = json.rows[key].categoryColor;
+        seat.sectionColor = json.rows[key].sectionColor ?? null;
         seat.seatId = json.rows[key].seats[i].seatId ?? null;
-        seat.seatNumber = i + startFrom;
-        seat.epcId = json.rows[key].seats[i].epcId ?? null;
-        seat.epcPrice = json.rows[key].seats[i].epcPrice ?? null;
-        seat.price = json.rows[key].seats[i].epcPrice ?? null;
+        seat.rowId = json.rows[key].seats[i].rowId ?? null;
+        seat.seatNumber = json.rows[key].seats[i].seatNumber ?? null;
+        seat.pcId = json.rows[key].seats[i].pcId ?? null;
+        seat.pcPrice = json.rows[key].seats[i].pcPrice ?? null;
+        seat.price = json.rows[key].seats[i].pcPrice ?? null;
         seat.seatIndex = i;
         seat.reserved = json.rows[key].seats[i].reserved;
+        seat.validated = json.rows[key].seats[i].ticketId ? false : null;
         seat.ticketId = json.rows[key].seats[i].ticketId ?? null;
         if (seat.reserved) seat.set('fill', '#cccccc');
-        seat.rowName = json.rows[key].label;
+        seat.rowName = json.rows[key].rowName;
 
         if (i == 0) seat.isStart = true;
         if (i == numberOfSeats - 1) seat.isEnd = true;
@@ -189,8 +209,11 @@ export const Map = () => {
   };
 
   useEffect(() => {
-    if (!firstTime) {
-      firstTime = true;
+    // if (!firstTime) {
+    //   firstTime = true;
+    //   return;
+    // }
+    if (!seatMap) {
       return;
     }
     canvas = initCanvas();
@@ -231,8 +254,8 @@ export const Map = () => {
     canvas.preserveObjectStacking = true;
     canvas.renderOnAddRemove = false;
 
-    if (eventData) {
-      loadDesign(eventData);
+    if (seatMap) {
+      loadDesign(seatMap);
       centerCanvasToObjectsWithPadding(canvas);
       canvas.setViewportTransform(canvas.viewportTransform);
     }
@@ -249,7 +272,7 @@ export const Map = () => {
         handleSeatSelection(e.transform.target, tickets);
       });
     }
-  }, [eventData, tickets]);
+  }, [seatMap, tickets]);
 
   const initCanvas = () =>
     new fabric.Canvas('canvas', {
@@ -264,8 +287,8 @@ export const Map = () => {
       serialized.push({
         seatId: element.seatId,
         sectionId: element.sectionId,
-        epcId: element.epcId,
-        epcPrice: element.epcPrice,
+        epcId: element.pcId,
+        epcPrice: element.pcPrice,
         id: element.id,
         ticketId: element.tickedId,
         sectionName: element.sectionName,
@@ -274,6 +297,7 @@ export const Map = () => {
         rowName: element.rowName,
         reserved: element.reserved,
         price: element.price,
+        rowId: element.rowId,
         sectionColor: element.sectionColor,
       });
     });
