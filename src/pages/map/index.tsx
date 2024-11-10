@@ -20,7 +20,7 @@ export const Map = () => {
   const canvasDivRef = useRef(null);
   const [tickets, setTickets] = useState([]);
 
-  const seatMap = JSON.parse(window.seatMap);
+  const seatMap = window.seatMap ? JSON.parse(window.seatMap) : '';
 
   window.addEventListener('resize', () => {
     if (canvasDivRef && canvasDivRef.current && canvas) {
