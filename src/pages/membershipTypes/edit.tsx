@@ -61,6 +61,19 @@ export const EditMembershipType = () => {
                 <Input placeholder="Name" />
               </Form.Item>
               <Form.Item
+                name="pointsPerTicket"
+                label="Points"
+                style={{ width: '100%' }}
+                rules={[{ required: true, message: '' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Points"
+                  addonAfter={'points / ticket'}
+                  min={0}
+                />
+              </Form.Item>
+              <Form.Item
                 name="price"
                 label="Price"
                 style={{ width: '100%' }}

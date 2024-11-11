@@ -671,7 +671,10 @@ export type MembershipTypeListQueryVariables = Types.Exact<{
 export type MembershipTypeListQuery = {
   membershipTypes: {
     nodes: Array<
-      Pick<Types.MembershipType, 'id' | 'name' | 'price' | 'description'>
+      Pick<
+        Types.MembershipType,
+        'id' | 'name' | 'pointsPerTicket' | 'price' | 'description'
+      >
     >;
   };
 };

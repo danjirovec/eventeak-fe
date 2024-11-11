@@ -146,6 +146,8 @@ export const CREATE_MEMBERSHIP_TYPE_MUTATION = gql`
     createOneMembershipType(input: $input) {
       name
       description
+      pointsPerTicket
+      price
       business {
         id
       }
@@ -443,6 +445,8 @@ export const UPDATE_MEMBERSHIP_TYPE_MUTATION = gql`
     updateOneMembershipType(input: $input) {
       name
       description
+      price
+      pointsPerTicket
       business {
         id
       }

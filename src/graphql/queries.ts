@@ -453,6 +453,7 @@ export const MEMBERSHIP_TYPE_QUERY = gql`
       nodes {
         id
         name
+        pointsPerTicket
         price
         description
       }

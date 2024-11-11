@@ -109,6 +109,31 @@ export const MembershipTypeList = ({ children }: React.PropsWithChildren) => {
             )}
           />
           <Table.Column<MembershipType>
+            dataIndex="pointsPerTicket"
+            title="Points"
+            defaultFilteredValue={getDefaultFilter('pointsPerTicket', filters)}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => {
+              return (
+                <FilterDropdown
+                  mapValue={(selectedKeys) => [selectedKeys]}
+                  {...props}
+                >
+                  <InputNumber style={{ width: 250 }} placeholder="Points" />
+                </FilterDropdown>
+              );
+            }}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('pointsPerTicket', sorters)}
+            render={(value, record) => (
+              <Space>
+                <Text
+                  style={{ whiteSpace: 'nowrap' }}
+                >{`${record.pointsPerTicket}`}</Text>
+              </Space>
+            )}
+          />
+          <Table.Column<MembershipType>
             dataIndex="price"
             title="Price"
             defaultFilteredValue={getDefaultFilter('price', filters)}
