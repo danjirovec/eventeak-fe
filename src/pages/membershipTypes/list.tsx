@@ -10,7 +10,7 @@ import {
   useTable,
 } from '@refinedev/antd';
 import { getDefaultFilter, useGo } from '@refinedev/core';
-import { Input, Space, Table } from 'antd';
+import { Input, InputNumber, Space, Table } from 'antd';
 import { MEMBERSHIP_TYPE_QUERY } from 'graphql/queries';
 import { CopyOutlined, FilterFilled } from '@ant-design/icons';
 import { Text } from 'components/text';
@@ -105,6 +105,31 @@ export const MembershipTypeList = ({ children }: React.PropsWithChildren) => {
             render={(value, record) => (
               <Space>
                 <Text style={{ whiteSpace: 'nowrap' }}>{record.name}</Text>
+              </Space>
+            )}
+          />
+          <Table.Column<MembershipType>
+            dataIndex="price"
+            title="Price"
+            defaultFilteredValue={getDefaultFilter('price', filters)}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => {
+              return (
+                <FilterDropdown
+                  mapValue={(selectedKeys) => [selectedKeys]}
+                  {...props}
+                >
+                  <InputNumber style={{ width: 250 }} placeholder="Price" />
+                </FilterDropdown>
+              );
+            }}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('price', sorters)}
+            render={(value, record) => (
+              <Space>
+                <Text
+                  style={{ whiteSpace: 'nowrap' }}
+                >{`${record.price} ${business?.currency}`}</Text>
               </Space>
             )}
           />

@@ -34,7 +34,7 @@ class RowGroup {
   seats = [];
   sectionName = 'None';
   sectionColor = seatColor;
-  rowName = -1;
+  rowName = '1';
   startSeatsFrom = 1;
   group = null;
 }
@@ -1032,7 +1032,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   };
 
   const onDeleteRow = () => {
-    setRowName(-1);
+    setRowName('1');
     setStartingSeat(1);
     editor.canvas.discardActiveObject();
     editor.canvas.requestRenderAll();
@@ -1071,10 +1071,11 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
   const onAutomaticRowLabeling = () => {
     let rowName = 1;
     for (const key in groups) {
+      const strRow = String(rowName);
       if (!groups[key]) continue;
       if (currSelectedGoup.length == 1 && currSelectedGoup[0] == key)
-        setRowName(rowName);
-      groups[key].rowName = rowName;
+        setRowName(strRow);
+      groups[key].rowName = strRow;
       rowName += 1;
     }
     rowsLabeled('success');
@@ -1084,7 +1085,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
     if (currSelectedGoup.length != 1 || !groups[currSelectedGoup[0]]) return;
     return groups[currSelectedGoup[0]].rowName
       ? groups[currSelectedGoup[0]].rowName
-      : -1;
+      : '1';
   };
 
   const handleChangeRowLabel = (e) => {

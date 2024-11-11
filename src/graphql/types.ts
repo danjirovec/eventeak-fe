@@ -74,7 +74,7 @@ export type CreateMembershipMutationVariables = Types.Exact<{
 
 export type CreateMembershipMutation = {
   createOneMembership: Pick<Types.Membership, 'points' | 'expiryDate'> & {
-    membershipType?: Types.Maybe<Pick<Types.MembershipType, 'id' | 'name'>>;
+    membershipType: Pick<Types.MembershipType, 'id' | 'name'>;
     user: Pick<Types.User, 'id' | 'email'>;
     business: Pick<Types.Business, 'id'>;
   };
@@ -191,7 +191,12 @@ export type UpdateUserMutationVariables = Types.Exact<{
 export type UpdateUserMutation = {
   updateOneUser: Pick<
     Types.User,
-    'email' | 'birthDate' | 'firstName' | 'lastName' | 'placeOfResidence'
+    | 'email'
+    | 'birthDate'
+    | 'firstName'
+    | 'lastName'
+    | 'avatarUrl'
+    | 'placeOfResidence'
   > & { defaultBusiness?: Types.Maybe<Pick<Types.Business, 'id' | 'name'>> };
 };
 
@@ -289,7 +294,7 @@ export type UpdateMembershipMutation = {
     Types.Membership,
     'id' | 'points' | 'expiryDate'
   > & {
-    membershipType?: Types.Maybe<Pick<Types.MembershipType, 'id' | 'name'>>;
+    membershipType: Pick<Types.MembershipType, 'id' | 'name'>;
     user: Pick<Types.User, 'id' | 'email' | 'firstName' | 'lastName'>;
     business: Pick<Types.Business, 'id' | 'name'>;
   };
@@ -433,6 +438,7 @@ export type CustomersListQuery = {
         Types.User,
         | 'id'
         | 'email'
+        | 'avatarUrl'
         | 'firstName'
         | 'lastName'
         | 'created'
@@ -647,7 +653,7 @@ export type MembershipsListQuery = {
     nodes: Array<
       Pick<Types.Membership, 'id' | 'points' | 'expiryDate'> & {
         user: Pick<Types.User, 'id' | 'email'>;
-        membershipType?: Types.Maybe<Pick<Types.MembershipType, 'id' | 'name'>>;
+        membershipType: Pick<Types.MembershipType, 'id' | 'name'>;
         business: Pick<Types.Business, 'id'>;
       }
     >;
@@ -664,7 +670,9 @@ export type MembershipTypeListQueryVariables = Types.Exact<{
 
 export type MembershipTypeListQuery = {
   membershipTypes: {
-    nodes: Array<Pick<Types.MembershipType, 'id' | 'name' | 'description'>>;
+    nodes: Array<
+      Pick<Types.MembershipType, 'id' | 'name' | 'price' | 'description'>
+    >;
   };
 };
 

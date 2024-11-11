@@ -1,11 +1,13 @@
 import React from 'react';
 import { Edit, ListButton, useForm } from '@refinedev/antd';
-import { Button, Col, Form, Input, Row } from 'antd';
+import { Button, Col, Form, Input, InputNumber, Row } from 'antd';
 import { UPDATE_MEMBERSHIP_TYPE_MUTATION } from 'graphql/mutations';
 import { requiredOptionalMark } from 'components/requiredMark';
 import { useGo } from '@refinedev/core';
+import { useGlobalStore } from 'providers/context/store';
 
 export const EditMembershipType = () => {
+  const business = useGlobalStore((state) => state.business);
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -51,8 +53,25 @@ export const EditMembershipType = () => {
               layout="vertical"
               requiredMark={requiredOptionalMark}
             >
-              <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+              <Form.Item
+                label="Name"
+                name="name"
+                rules={[{ required: true, message: '' }]}
+              >
                 <Input placeholder="Name" />
+              </Form.Item>
+              <Form.Item
+                name="price"
+                label="Price"
+                style={{ width: '100%' }}
+                rules={[{ required: true, message: '' }]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Price"
+                  addonAfter={business?.currency}
+                  min={0}
+                />
               </Form.Item>
               <Form.Item label="Description" name="description">
                 <Input.TextArea placeholder="Description" />

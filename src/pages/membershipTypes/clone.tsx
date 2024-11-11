@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Col, Form, Input, Row } from 'antd';
+import { Button, Col, Form, Input, InputNumber, Row } from 'antd';
 import { Create, useForm } from '@refinedev/antd';
 import { useGo } from '@refinedev/core';
 import { CREATE_MEMBERSHIP_TYPE_MUTATION } from 'graphql/mutations';
@@ -58,7 +58,11 @@ export const CloneMembershipType = () => {
             requiredMark={requiredOptionalMark}
             onFinish={handleOnFinish}
           >
-            <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+            <Form.Item
+              label="Name"
+              name="name"
+              rules={[{ required: true, message: '' }]}
+            >
               <Input
                 placeholder="Name"
                 onKeyDown={(e) => {
@@ -66,6 +70,19 @@ export const CloneMembershipType = () => {
                     e.preventDefault();
                   }
                 }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="price"
+              label="Price"
+              style={{ width: '100%' }}
+              rules={[{ required: true, message: '' }]}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                placeholder="Price"
+                addonAfter={business?.currency}
+                min={0}
               />
             </Form.Item>
             <Form.Item label="Description" name="description">
