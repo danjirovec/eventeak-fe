@@ -17,6 +17,7 @@ import { useGlobalStore } from 'providers/context/store';
 import { MembershipTypeListQuery } from '/graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { MEMBERSHIP_TYPE_QUERY } from 'graphql/queries';
+import dayjs from 'dayjs';
 
 export const CreateBenefit = () => {
   const business = useGlobalStore((state) => state.business);
@@ -141,6 +142,7 @@ export const CreateBenefit = () => {
               style={{ width: '100%' }}
             >
               <DatePicker
+                minDate={dayjs()}
                 showNow={false}
                 style={{ width: '100%' }}
                 format="D. M. YYYY"

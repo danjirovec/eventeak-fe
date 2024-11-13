@@ -147,6 +147,7 @@ export const CloneBenefit = () => {
               })}
             >
               <DatePicker
+                minDate={dayjs()}
                 showNow={false}
                 style={{ width: '100%' }}
                 format="D. M. YYYY"

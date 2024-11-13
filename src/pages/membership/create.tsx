@@ -11,6 +11,7 @@ import {
 } from 'graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { MEMBERSHIP_TYPE_QUERY, USER_BUSINESSES_QUERY } from 'graphql/queries';
+import dayjs from 'dayjs';
 
 export const CreateMembership = () => {
   const business = useGlobalStore((state) => state.business);
@@ -169,6 +170,7 @@ export const CreateMembership = () => {
               rules={[{ required: true, message: '' }]}
             >
               <DatePicker
+                minDate={dayjs()}
                 showNow={false}
                 style={{ width: '100%' }}
                 format="D. M. YYYY"
