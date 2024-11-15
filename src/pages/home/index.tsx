@@ -75,7 +75,7 @@ export const Home = () => {
       {
         field: 'role',
         operator: 'eq',
-        value: 0,
+        value: 'Admin',
       },
     ],
     sorters: [

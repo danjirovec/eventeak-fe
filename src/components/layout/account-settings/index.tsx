@@ -98,7 +98,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
       {
         field: 'role',
         operator: 'eq',
-        value: 0,
+        value: 'Admin',
       },
     ],
     sorters: [

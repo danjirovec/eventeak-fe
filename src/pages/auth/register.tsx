@@ -106,7 +106,7 @@ export const RegisterPage: React.FC<RegisterProps> = ({
     const dataToSubmit = {
       ...user,
       ...values,
-      role: 0,
+      role: 'Admin',
     };
     register(dataToSubmit);
   };
