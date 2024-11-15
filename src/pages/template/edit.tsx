@@ -139,13 +139,6 @@ export const EditTemplate = () => {
     },
   });
 
-  const filteredSections = sections?.options?.filter(
-    (o: any) =>
-      !selectedPriceCategories.some(
-        (price: any) => price.fields.pcSection === o.value,
-      ),
-  );
-
   const { selectProps: discounts, query: discountsQuery } = useSelect<
     GetFieldsFromList<DiscountsListQuery>
   >({
@@ -587,7 +580,7 @@ export const EditTemplate = () => {
                             <Select
                               allowClear={true}
                               placeholder="Section"
-                              options={venueId ? filteredSections : []}
+                              options={venueId ? sections.options : []}
                             />
                           </Form.Item>
                           <Form.Item

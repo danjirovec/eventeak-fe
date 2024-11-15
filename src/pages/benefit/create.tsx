@@ -101,7 +101,7 @@ export const CreateBenefit = () => {
             <Form.Item
               label="Description"
               name="description"
-              rules={[{ required: true }]}
+              rules={[{ required: true, message: '' }]}
             >
               <TextArea placeholder="Description"></TextArea>
             </Form.Item>
