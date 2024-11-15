@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 
 export const CreateMembership = () => {
   const business = useGlobalStore((state) => state.business);
+  const user = useGlobalStore((state) => state.user);
   const go = useGo();
   const goToListPage = () => {
     go({
@@ -31,6 +32,7 @@ export const CreateMembership = () => {
     mutationMode: 'pessimistic',
     meta: {
       gqlMutation: CREATE_MEMBERSHIP_MUTATION,
+      customType: true,
     },
     submitOnEnter: true,
   });
@@ -91,9 +93,18 @@ export const CreateMembership = () => {
     });
 
   const handleOnFinish = (values: any) => {
+    const membershipType = membershipTypesQuery.data?.data.find(
+      (item) => item.id == values.membershipTypeId,
+    );
     onFinish({
       ...values,
       businessId: business?.id,
+      order: {
+        userId: user?.id,
+        businessId: business?.id,
+        total: membershipType?.price,
+        paymentType: 'Membership',
+      },
     });
   };
 

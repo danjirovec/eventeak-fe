@@ -88,8 +88,8 @@ export const CREATE_BENEFIT_MUTATION = gql`
 
 // Mutation to create membership
 export const CREATE_MEMBERSHIP_MUTATION = gql`
-  mutation CreateMembership($input: CreateOneMembershipInput!) {
-    createOneMembership(input: $input) {
+  mutation CreateMembership($input: CreateMembership!) {
+    createMembership(input: $input) {
       membershipType {
         id
         name
@@ -160,7 +160,6 @@ export const CREATE_BUSINESS_MUTATION = gql`
   mutation CreateBusiness($input: CreateBusiness!) {
     createBusiness(input: $input) {
       name
-      apiKey
       logoUrl
       currency
     }

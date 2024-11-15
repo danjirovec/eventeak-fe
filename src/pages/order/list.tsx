@@ -10,8 +10,8 @@ import {
   useSelect,
   useTable,
 } from '@refinedev/antd';
-import { getDefaultFilter, useGo, useNavigation } from '@refinedev/core';
-import { Input, InputNumber, Select, Space, Table } from 'antd';
+import { getDefaultFilter, useNavigation } from '@refinedev/core';
+import { Input, InputNumber, Select, Space, Table, Checkbox } from 'antd';
 import { ORDERS_QUERY, USER_BUSINESSES_QUERY } from 'graphql/queries';
 import { FilterFilled } from '@ant-design/icons';
 import { Text } from 'components/text';
@@ -23,7 +23,6 @@ import { GetFieldsFromList } from '@refinedev/nestjs-query';
 export const OrderList = ({ children }: React.PropsWithChildren) => {
   const business = useGlobalStore((state) => state.business);
   useDocumentTitle('Orders - Eventeak');
-  const go = useGo();
   const { edit } = useNavigation();
   const { tableProps, filters, sorters } = useTable({
     resource: 'orders',
@@ -58,6 +57,11 @@ export const OrderList = ({ children }: React.PropsWithChildren) => {
       initial: [
         {
           field: 'name',
+          operator: 'contains',
+          value: undefined,
+        },
+        {
+          field: 'paymentId',
           operator: 'contains',
           value: undefined,
         },
@@ -226,6 +230,58 @@ export const OrderList = ({ children }: React.PropsWithChildren) => {
                 <Text
                   style={{ whiteSpace: 'nowrap' }}
                 >{`${record.total} ${business?.currency}`}</Text>
+              </Space>
+            )}
+          />
+          <Table.Column<Order>
+            dataIndex="paymentType"
+            title="Payment Type"
+            defaultFilteredValue={getDefaultFilter('paymentType', filters)}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => (
+              <FilterDropdown
+                {...props}
+                mapValue={(selectedKeys) => {
+                  return selectedKeys;
+                }}
+              >
+                <Checkbox.Group>
+                  <Checkbox value={'Membership'}>Membership</Checkbox>
+                  <Checkbox value={'Ticket'}>Ticket</Checkbox>
+                </Checkbox.Group>
+              </FilterDropdown>
+            )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('paymentType', sorters)}
+            render={(value, record) => (
+              <Space>
+                <Text style={{ whiteSpace: 'nowrap' }}>
+                  {record.paymentType}
+                </Text>
+              </Space>
+            )}
+          />
+          <Table.Column<Order>
+            dataIndex="paymentId"
+            title="Payment ID"
+            defaultFilteredValue={getDefaultFilter(
+              'paymentId',
+              filters,
+              'contains',
+            )}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => (
+              <FilterDropdown {...props}>
+                <Input placeholder="Payment ID" />
+              </FilterDropdown>
+            )}
+            sorter={{ multiple: 1 }}
+            defaultSortOrder={getDefaultSortOrder('paymentId', sorters)}
+            render={(value, record) => (
+              <Space>
+                <Text style={{ whiteSpace: 'nowrap' }}>
+                  {record.paymentId ? record.paymentId.slice(3) : null}
+                </Text>
               </Space>
             )}
           />

@@ -320,6 +320,8 @@ export const ORDERS_QUERY = gql`
       nodes {
         id
         total
+        paymentId
+        paymentType
         user {
           id
           email
@@ -406,7 +408,6 @@ export const BUSINESSES_QUERY = gql`
       nodes {
         id
         name
-        apiKey
         logoUrl
         currency
       }
@@ -558,7 +559,6 @@ export const CUSTOM_BUSINESSES_QUERY = gql`
       nodes {
         id
         name
-        apiKey
         logoUrl
         currency
       }

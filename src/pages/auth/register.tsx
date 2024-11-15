@@ -37,6 +37,7 @@ import {
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import { requiredOptionalMark } from 'components/requiredMark';
 import logo from 'assets/eventeak.png';
+import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
 const { useToken } = theme;
@@ -212,6 +213,7 @@ export const RegisterPage: React.FC<RegisterProps> = ({
         ]}
       >
         <DatePicker
+          maxDate={dayjs()}
           showNow={false}
           format="DD/MM/YYYY"
           placeholder="Birth Date"

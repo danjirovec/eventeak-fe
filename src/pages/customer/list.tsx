@@ -14,6 +14,7 @@ import {
   useCustomMutation,
   useList,
   useNavigation,
+  useUpdate,
 } from '@refinedev/core';
 import {
   Avatar,
@@ -29,7 +30,6 @@ import {
 import {
   BENEFITS_QUERY,
   CUSTOMERS_QUERY,
-  MEMBERSHIP_TYPE_QUERY,
   MEMBERSHIPS_QUERY,
 } from 'graphql/queries';
 import {
@@ -47,13 +47,16 @@ import { useGlobalStore } from 'providers/context/store';
 import { useEffect, useState } from 'react';
 import { Form } from 'antd';
 import { requiredMark } from 'components';
-import { BenefitsListQuery, MembershipTypeListQuery } from 'graphql/types';
+import { BenefitsListQuery } from 'graphql/types';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import {
   CREATE_USER_BENEFIT_MUTATION,
   SEND_EMAIL_MUTATION,
 } from 'graphql/mutations';
 import { BUCKET_URL } from 'config/config';
+import { notification } from 'antd';
+
+type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
 export const CustomerList = ({ children }: React.PropsWithChildren) => {
   const [singleEmailOpen, setSingleEmailOpen] = useState(false);
@@ -63,12 +66,19 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
   const business = useGlobalStore((state) => state.business);
   useDocumentTitle('Users - Eventeak');
   const { mutate: create, isLoading: createLoading } = useCreate();
+  const { mutate: update, isLoading: updateLoading } = useUpdate();
   const [singleEmailForm] = Form.useForm();
   const [batchEmailForm] = Form.useForm();
   const [benefitForm] = Form.useForm();
   const { edit } = useNavigation();
-
   const { mutate, isLoading: customLoading } = useCustomMutation();
+  const [api, contextHolder] = notification.useNotification();
+
+  const pointsWarning = (type: NotificationType) => {
+    api[type]({
+      message: 'Not enough points',
+    });
+  };
 
   const { tableProps, filters, tableQuery } = useTable({
     resource: 'businessUsers',
@@ -162,33 +172,6 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
     ],
   });
 
-  const { selectProps: membershipTypes, query: membershipTypesQuery } =
-    useSelect<GetFieldsFromList<MembershipTypeListQuery>>({
-      resource: 'membership-types',
-      optionLabel: 'name',
-      optionValue: 'id',
-      meta: {
-        gqlQuery: MEMBERSHIP_TYPE_QUERY,
-      },
-      pagination: {
-        pageSize: 50,
-        mode: 'server',
-      },
-      filters: [
-        {
-          field: 'business.id',
-          operator: 'eq',
-          value: business?.id,
-        },
-      ],
-      sorters: [
-        {
-          field: 'created',
-          order: 'desc',
-        },
-      ],
-    });
-
   const { data, isLoading: membershipsLoading } = useList({
     resource: 'memberships',
     pagination: {
@@ -280,31 +263,46 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
       return;
     });
     if (!valid) return;
-    create({
-      resource: 'userBenefits',
-      values: {
-        userId: id,
-        businessId: business?.id,
-        benefitId: benefit,
-      },
-      successNotification: () => {
-        return {
-          description: 'Success',
-          message: 'Successfully applied benefit',
-          type: 'success',
-        };
-      },
-      errorNotification: (data: any) => {
-        return {
-          description: 'Error',
-          message: data.message,
-          type: 'error',
-        };
-      },
-      meta: {
-        gqlMutation: CREATE_USER_BENEFIT_MUTATION,
-      },
-    });
+    const membership = data?.data.find((item) => item.user.id == id);
+    const benefitPoints = benefitsQuery.data?.data.find(
+      (item) => item.id == benefit,
+    )?.points;
+    if (membership && benefitPoints) {
+      if (membership.points > benefitPoints) {
+        create({
+          resource: 'userBenefits',
+          values: {
+            userId: id,
+            businessId: business?.id,
+            benefitId: benefit,
+          },
+          successNotification: () => {
+            return {
+              description: 'Success',
+              message: 'Successfully applied benefit',
+              type: 'success',
+            };
+          },
+          errorNotification: (data: any) => {
+            return {
+              description: 'Error',
+              message: data.message,
+              type: 'error',
+            };
+          },
+          meta: {
+            gqlMutation: CREATE_USER_BENEFIT_MUTATION,
+          },
+        });
+        update({
+          resource: 'memberships',
+          id: membership?.id,
+          values: { points: membership?.points - benefitPoints },
+        });
+      } else {
+        pointsWarning('error');
+      }
+    }
     benefitForm.resetFields();
   };
 
@@ -335,6 +333,7 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
 
   return (
     <div>
+      {contextHolder}
       <List
         breadcrumb={false}
         headerButtons={() => (

@@ -69,11 +69,11 @@ export type CreateBenefitMutation = {
 };
 
 export type CreateMembershipMutationVariables = Types.Exact<{
-  input: Types.CreateOneMembershipInput;
+  input: Types.CreateMembership;
 }>;
 
 export type CreateMembershipMutation = {
-  createOneMembership: Pick<Types.Membership, 'points' | 'expiryDate'> & {
+  createMembership: Pick<Types.Membership, 'points' | 'expiryDate'> & {
     membershipType: Pick<Types.MembershipType, 'id' | 'name'>;
     user: Pick<Types.User, 'id' | 'email'>;
     business: Pick<Types.Business, 'id'>;
@@ -109,7 +109,7 @@ export type CreateMembershipTypeMutationVariables = Types.Exact<{
 export type CreateMembershipTypeMutation = {
   createOneMembershipType: Pick<
     Types.MembershipType,
-    'name' | 'description'
+    'name' | 'description' | 'pointsPerTicket' | 'price'
   > & { business: Pick<Types.Business, 'id'> };
 };
 
@@ -328,7 +328,7 @@ export type UpdateMembershipTypeMutationVariables = Types.Exact<{
 export type UpdateMembershipTypeMutation = {
   updateOneMembershipType: Pick<
     Types.MembershipType,
-    'name' | 'description'
+    'name' | 'description' | 'price' | 'pointsPerTicket'
   > & { business: Pick<Types.Business, 'id'> };
 };
 

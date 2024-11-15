@@ -85,8 +85,8 @@ export const authProvider: AuthProvider = {
     const password = params.password;
     try {
       const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
+        email: email,
+        password: password,
         options: {
           emailRedirectTo: `${CLIENT_URL}login`,
           data: {
@@ -109,7 +109,7 @@ export const authProvider: AuthProvider = {
         return {
           success: true,
           successNotification: {
-            message: '',
+            message: 'Verify your email',
             description: 'Sign up successful',
           },
           redirectTo: '/login',
