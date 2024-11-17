@@ -20,7 +20,6 @@ export const EditDiscount = () => {
       <Row justify="center" gutter={[32, 32]}>
         <Col xs={24} xl={8}>
           <Edit
-            canDelete
             goBack={<Button>←</Button>}
             isLoading={formLoading}
             saveButtonProps={saveButtonProps}
