@@ -80,6 +80,23 @@ export const authProvider: AuthProvider = {
     };
   },
   register: async (params) => {
+    const { data: user } = await supabaseClient
+      .from('user')
+      .select('email, id')
+      .eq('email', params.email)
+      .maybeSingle();
+
+    if (user) {
+      return {
+        success: false,
+        error: {
+          message: 'Sign up failed',
+          name: 'User with this email already exists',
+        },
+        redirectTo: '/login',
+      };
+    }
+
     const birthDate = dayjs(params.birthDate).toISOString();
     const email = params.email;
     const password = params.password;

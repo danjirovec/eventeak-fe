@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Edit, ListButton, useForm } from '@refinedev/antd';
 import {
   Button,
-  Card,
   Col,
   Divider,
   Flex,
@@ -11,10 +10,9 @@ import {
   notification,
   Row,
   Select,
-  Space,
 } from 'antd';
 import { UPDATE_BUSINESS_MUTATION } from 'graphql/mutations';
-import { requiredOptionalMark } from 'components/requiredMark';
+import { requiredMark, requiredOptionalMark } from 'components/requiredMark';
 import { useGo } from '@refinedev/core';
 import SupaUpload from 'components/upload/supaUpload';
 import { uploadEdit } from 'components/upload/util';
@@ -62,7 +60,11 @@ export const EditBusiness = () => {
     const valid = await inviteForm.validateFields(['email']).catch(() => {
       return;
     });
-    if (!valid) {
+    if (
+      !valid ||
+      inviteForm.getFieldValue('email') == '' ||
+      inviteForm.getFieldValue('email') == undefined
+    ) {
       return;
     }
     try {
@@ -170,7 +172,10 @@ export const EditBusiness = () => {
                   label="Invite user to manage this business"
                   name="email"
                   style={{ margin: 0, width: '100%' }}
-                  rules={[{ type: 'email', message: '' }]}
+                  rules={[
+                    { type: 'email', message: '' },
+                    // { required: true, message: '' },
+                  ]}
                 >
                   <Input placeholder="Email" />
                 </Form.Item>
