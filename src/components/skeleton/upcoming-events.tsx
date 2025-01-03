@@ -17,7 +17,7 @@ const UpcomingEventsSkeleton = () => {
           <Skeleton.Button
             active
             style={{
-              width: "300px",
+              width: "200px",
               marginTop: "8px",
               height: "16px",
             }}

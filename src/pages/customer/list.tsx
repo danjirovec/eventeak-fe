@@ -63,6 +63,7 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
   const [batchEmailOpen, setBatchEmailOpen] = useState(false);
   const [benefitOpen, setBenefitOpen] = useState(false);
   const [benefit, setBenefit] = useState<string | undefined>();
+  const [userIdentifier, setUserIdentifier] = useState<string | undefined>();
   const business = useGlobalStore((state) => state.business);
   useDocumentTitle('Users - Eventeak');
   const { mutate: create, isLoading: createLoading } = useCreate();
@@ -209,7 +210,7 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
   };
 
   const handleSingleEmail = async (
-    email: string,
+    email: string | undefined,
     subject: string,
     message: string,
   ) => {
@@ -258,7 +259,10 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
     });
   };
 
-  const handleBenefit = async (id: string, benefit: string | undefined) => {
+  const handleBenefit = async (
+    id: string | undefined,
+    benefit: string | undefined,
+  ) => {
     const valid = await benefitForm.validateFields().catch(() => {
       return;
     });
@@ -412,6 +416,92 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
                   rules={[{ required: true, message: '' }]}
                 >
                   <Input.TextArea placeholder="Message" />
+                </Form.Item>
+              </Form>
+            </Modal>
+            <Modal
+              open={benefitOpen}
+              title={`Apply benefit`}
+              onCancel={handleCancelBenefit}
+              footer={[
+                <Button
+                  key="submit"
+                  icon={<CheckCircleOutlined />}
+                  type="primary"
+                  loading={createLoading}
+                  onClick={() => {
+                    handleBenefit(userIdentifier, benefit);
+                  }}
+                >
+                  Apply
+                </Button>,
+              ]}
+            >
+              <Form
+                form={benefitForm}
+                layout="vertical"
+                requiredMark={requiredMark}
+              >
+                <Form.Item
+                  name="benefit"
+                  label="Benefit"
+                  rules={[{ required: true, message: '' }]}
+                >
+                  <Select
+                    onChange={(value) => setBenefit(value)}
+                    allowClear
+                    showSearch
+                    filterOption={(input, option) =>
+                      String(option?.label ?? '')
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    placeholder="Select benefit"
+                    options={benefits.options}
+                  />
+                </Form.Item>
+              </Form>
+            </Modal>
+            <Modal
+              open={singleEmailOpen}
+              title={`Send email to ${userIdentifier}`}
+              onCancel={handleCancelSingleEmail}
+              footer={[
+                <Button
+                  key="submit"
+                  icon={<SendOutlined />}
+                  type="primary"
+                  loading={customLoading}
+                  onClick={() => {
+                    handleSingleEmail(
+                      userIdentifier,
+                      singleEmailForm.getFieldValue('subject'),
+                      singleEmailForm.getFieldValue('message'),
+                    );
+                  }}
+                >
+                  Send
+                </Button>,
+              ]}
+            >
+              <Form
+                form={singleEmailForm}
+                layout="vertical"
+                requiredMark={requiredMark}
+              >
+                <Form.Item
+                  name="subject"
+                  label="Subject"
+                  rules={[{ required: true, message: '' }]}
+                >
+                  <Input placeholder="Subject"></Input>
+                </Form.Item>
+                <Form.Item
+                  name="message"
+                  label="Message"
+                  rules={[{ required: true, message: '' }]}
+                >
+                  <Input.TextArea placeholder="Message"></Input.TextArea>
                 </Form.Item>
               </Form>
             </Modal>
@@ -654,102 +744,22 @@ export const CustomerList = ({ children }: React.PropsWithChildren) => {
             fixed="right"
             render={(value, record) => (
               <Space>
-                <Modal
-                  open={singleEmailOpen}
-                  title={`Send email to ${record.user.email}`}
-                  onCancel={handleCancelSingleEmail}
-                  footer={[
-                    <Button
-                      key="submit"
-                      icon={<SendOutlined />}
-                      type="primary"
-                      loading={customLoading}
-                      onClick={() => {
-                        handleSingleEmail(
-                          record.user.email,
-                          singleEmailForm.getFieldValue('subject'),
-                          singleEmailForm.getFieldValue('message'),
-                        );
-                      }}
-                    >
-                      Send
-                    </Button>,
-                  ]}
-                >
-                  <Form
-                    form={singleEmailForm}
-                    layout="vertical"
-                    requiredMark={requiredMark}
-                  >
-                    <Form.Item
-                      name="subject"
-                      label="Subject"
-                      rules={[{ required: true, message: '' }]}
-                    >
-                      <Input placeholder="Subject"></Input>
-                    </Form.Item>
-                    <Form.Item
-                      name="message"
-                      label="Message"
-                      rules={[{ required: true, message: '' }]}
-                    >
-                      <Input.TextArea placeholder="Message"></Input.TextArea>
-                    </Form.Item>
-                  </Form>
-                </Modal>
                 <Button
-                  onClick={showSingleEmailModal}
+                  onClick={() => {
+                    setUserIdentifier(record.user.email);
+                    showSingleEmailModal();
+                  }}
                   style={{
                     width: 24,
                     height: 24,
                   }}
                   icon={<MailOutlined />}
                 />
-                <Modal
-                  open={benefitOpen}
-                  title={`Apply benefit`}
-                  onCancel={handleCancelBenefit}
-                  footer={[
-                    <Button
-                      key="submit"
-                      icon={<CheckCircleOutlined />}
-                      type="primary"
-                      loading={createLoading}
-                      onClick={() => {
-                        handleBenefit(record.user.id, benefit);
-                      }}
-                    >
-                      Apply
-                    </Button>,
-                  ]}
-                >
-                  <Form
-                    form={benefitForm}
-                    layout="vertical"
-                    requiredMark={requiredMark}
-                  >
-                    <Form.Item
-                      name="benefit"
-                      label="Benefit"
-                      rules={[{ required: true, message: '' }]}
-                    >
-                      <Select
-                        onChange={(value) => setBenefit(value)}
-                        allowClear
-                        showSearch
-                        filterOption={(input, option) =>
-                          String(option?.label ?? '')
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        placeholder="Select benefit"
-                        options={benefits.options}
-                      />
-                    </Form.Item>
-                  </Form>
-                </Modal>
                 <Button
-                  onClick={showBenefitModal}
+                  onClick={() => {
+                    setUserIdentifier(record.user.id);
+                    showBenefitModal();
+                  }}
                   style={{
                     width: 24,
                     height: 24,

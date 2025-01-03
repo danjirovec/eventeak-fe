@@ -146,6 +146,7 @@ export const CUSTOMERS_QUERY = gql`
           placeOfResidence
         }
       }
+      totalCount
     }
   }
 `;
@@ -305,6 +306,7 @@ export const TEMPLATE_DISCOUNTS_QUERY = gql`
           name
         }
       }
+      totalCount
     }
   }
 `;
@@ -411,6 +413,7 @@ export const BUSINESSES_QUERY = gql`
         logoUrl
         currency
       }
+      totalCount
     }
   }
 `;
@@ -439,6 +442,7 @@ export const MEMBERSHIPS_QUERY = gql`
           id
         }
       }
+      totalCount
     }
   }
 `;
@@ -458,6 +462,7 @@ export const MEMBERSHIP_TYPE_QUERY = gql`
         price
         description
       }
+      totalCount
     }
   }
 `;
