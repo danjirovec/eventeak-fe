@@ -118,10 +118,7 @@ export type CreateBusinessMutationVariables = Types.Exact<{
 }>;
 
 export type CreateBusinessMutation = {
-  createBusiness: Pick<
-    Types.Business,
-    'name' | 'apiKey' | 'logoUrl' | 'currency'
-  >;
+  createBusiness: Pick<Types.Business, 'name' | 'logoUrl' | 'currency'>;
 };
 
 export type CreateVenueMutationVariables = Types.Exact<{
@@ -432,7 +429,7 @@ export type CustomersListQueryVariables = Types.Exact<{
 }>;
 
 export type CustomersListQuery = {
-  businessUsers: {
+  businessUsers: Pick<Types.BusinessUserConnection, 'totalCount'> & {
     nodes: Array<{
       user: Pick<
         Types.User,
@@ -567,7 +564,7 @@ export type TemplateDiscountsListQueryVariables = Types.Exact<{
 }>;
 
 export type TemplateDiscountsListQuery = {
-  templateDiscounts: {
+  templateDiscounts: Pick<Types.TemplateDiscountConnection, 'totalCount'> & {
     nodes: Array<{
       discount: Pick<Types.Discount, 'id' | 'name' | 'percentage'>;
       template: Pick<Types.Template, 'id' | 'name'>;
@@ -584,7 +581,10 @@ export type OrdersListQueryVariables = Types.Exact<{
 export type OrdersListQuery = {
   orders: Pick<Types.OrderConnection, 'totalCount'> & {
     nodes: Array<
-      Pick<Types.Order, 'id' | 'total' | 'created'> & {
+      Pick<
+        Types.Order,
+        'id' | 'total' | 'paymentId' | 'paymentType' | 'created'
+      > & {
         user?: Types.Maybe<
           Pick<Types.User, 'id' | 'email' | 'firstName' | 'lastName'>
         >;
@@ -602,6 +602,16 @@ export type OrdersGraphQuery = {
   getOrderTotals: Array<Pick<Types.OrderGraph, 'date' | 'total'>>;
 };
 
+export type EventTicketsSoldQueryVariables = Types.Exact<{
+  meta: Types.Scalars['String']['input'];
+}>;
+
+export type EventTicketsSoldQuery = {
+  getTicketsSold: Array<
+    Pick<Types.EventTicketSold, 'capacity' | 'sold' | 'eventId'>
+  >;
+};
+
 export type TicketsListQueryVariables = Types.Exact<{
   filter: Types.TicketFilter;
   sorting?: Types.InputMaybe<Array<Types.TicketSort> | Types.TicketSort>;
@@ -611,7 +621,10 @@ export type TicketsListQueryVariables = Types.Exact<{
 export type TicketsListQuery = {
   tickets: Pick<Types.TicketConnection, 'totalCount'> & {
     nodes: Array<
-      Pick<Types.Ticket, 'id' | 'price' | 'validated' | 'created'> & {
+      Pick<
+        Types.Ticket,
+        'id' | 'price' | 'validated' | 'customEmail' | 'created'
+      > & {
         discount?: Types.Maybe<Pick<Types.Discount, 'id' | 'name'>>;
         user?: Types.Maybe<
           Pick<Types.User, 'id' | 'email' | 'firstName' | 'lastName'>
@@ -633,10 +646,8 @@ export type BusinessesListQueryVariables = Types.Exact<{
 }>;
 
 export type BusinessesListQuery = {
-  businesses: {
-    nodes: Array<
-      Pick<Types.Business, 'id' | 'name' | 'apiKey' | 'logoUrl' | 'currency'>
-    >;
+  businesses: Pick<Types.BusinessConnection, 'totalCount'> & {
+    nodes: Array<Pick<Types.Business, 'id' | 'name' | 'logoUrl' | 'currency'>>;
   };
 };
 
@@ -649,7 +660,7 @@ export type MembershipsListQueryVariables = Types.Exact<{
 }>;
 
 export type MembershipsListQuery = {
-  memberships: {
+  memberships: Pick<Types.MembershipConnection, 'totalCount'> & {
     nodes: Array<
       Pick<Types.Membership, 'id' | 'points' | 'expiryDate'> & {
         user: Pick<Types.User, 'id' | 'email'>;
@@ -669,7 +680,7 @@ export type MembershipTypeListQueryVariables = Types.Exact<{
 }>;
 
 export type MembershipTypeListQuery = {
-  membershipTypes: {
+  membershipTypes: Pick<Types.MembershipTypeConnection, 'totalCount'> & {
     nodes: Array<
       Pick<
         Types.MembershipType,
@@ -748,8 +759,6 @@ export type CustomBusinessesListQueryVariables = Types.Exact<{
 
 export type CustomBusinessesListQuery = {
   getUserBusinesses: {
-    nodes: Array<
-      Pick<Types.Business, 'id' | 'name' | 'apiKey' | 'logoUrl' | 'currency'>
-    >;
+    nodes: Array<Pick<Types.Business, 'id' | 'name' | 'logoUrl' | 'currency'>>;
   };
 };

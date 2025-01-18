@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { CreateButton } from '@refinedev/antd';
-import { useCreate, useDelete, useList, useNavigation } from '@refinedev/core';
+import {
+  useCreate,
+  useCustom,
+  useDelete,
+  useList,
+  useNavigation,
+} from '@refinedev/core';
 import {
   Button,
   Col,
@@ -15,7 +21,7 @@ import { UpcomingEvents } from 'components';
 import { Calendar } from 'components/scheduler';
 import { GetFieldsFromList } from '@refinedev/nestjs-query';
 import { EventsListQuery } from 'graphql/types';
-import { EVENTS_QUERY } from 'graphql/queries';
+import { EVENT_TICKETS_SOLD, EVENTS_QUERY } from 'graphql/queries';
 import dayjs from 'dayjs';
 import { CalendarCategories } from 'components/scheduler/categories';
 import { CategoryTag } from 'components';
@@ -29,6 +35,7 @@ import {
   HourglassTwoTone,
   MessageTwoTone,
   ShoppingCartOutlined,
+  ShoppingTwoTone,
   SoundTwoTone,
   TagTwoTone,
 } from '@ant-design/icons';
@@ -39,6 +46,7 @@ import { useGlobalStore } from 'providers/context/store';
 type EventInfoProps = {
   id: string;
   name: string;
+  date: Date;
 };
 
 export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
@@ -94,6 +102,7 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
     setEventInfo({
       id: info.event._def.publicId,
       name: info.event._def.title,
+      date: new Date(info.event._instance.range.end),
     });
     setOpen(true);
   };
@@ -141,6 +150,20 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
     form.setFieldValue('date', undefined);
     setOpen(false);
   };
+
+  const {
+    data: soldData,
+    isFetching: soldDataLoading,
+    refetch: soldRefetch,
+  } = useCustom({
+    url: '',
+    method: 'post',
+    meta: {
+      gqlQuery: EVENT_TICKETS_SOLD,
+      meta: JSON.stringify({ meta: business?.id }),
+      empty: !business,
+    },
+  });
 
   return (
     <Flex vertical>
@@ -219,6 +242,9 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
             Edit
           </Button>,
           <Button
+            disabled={
+              eventInfo?.date ? new Date(eventInfo.date) < new Date() : false
+            }
             key="submit"
             type="primary"
             icon={<ShoppingCartOutlined />}
@@ -313,6 +339,29 @@ export const CalendarPageWrapper: React.FC<React.PropsWithChildren> = ({
                   {event.template?.subtitles
                     ? event.template?.subtitles
                     : 'None'}
+                </Text>
+              </div>
+              <div>
+                <ShoppingTwoTone
+                  twoToneColor={'#007965'}
+                  style={{ marginRight: 10 }}
+                />
+                <Text size="sm" style={{ marginRight: 5 }}>
+                  Tickets Sold:
+                </Text>
+                <Text strong size="sm">
+                  {soldData?.data.getTicketsSold.find(
+                    (event: any) => event.eventId === eventInfo?.id,
+                  ) &&
+                    `${
+                      soldData.data.getTicketsSold.find(
+                        (event: any) => event.eventId === eventInfo?.id,
+                      ).sold
+                    } / ${
+                      soldData.data.getTicketsSold.find(
+                        (event: any) => event.eventId === eventInfo?.id,
+                      ).capacity
+                    }`}
                 </Text>
               </div>
             </div>

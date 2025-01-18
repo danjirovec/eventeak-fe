@@ -1350,7 +1350,7 @@ const SeatDesigner = forwardRef((props: KeyValueObject, ref) => {
       primitives: primitives,
     };
     sections = [['None', seatColor]];
-    groups = {};
+    // groups = {};
     return myData;
   };
 

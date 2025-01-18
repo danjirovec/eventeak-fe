@@ -52,6 +52,7 @@ export const Checkout = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [event, setEvent] = useState<Event>();
   const [user, setUser] = useState<User | null>();
+  const [customEmail, setCustomEmail] = useState<string | null>();
   const [removed, setRemoved] = useState(0);
   const [total, setTotal] = useState(0);
   const { edit } = useNavigation();
@@ -110,11 +111,24 @@ export const Checkout = () => {
     setEvent(selectedEvent);
   };
 
-  const handleSetUser = (value: string) => {
+  // const handleSetUser = (value: string) => {
+  //   const selectedUser = data?.response.users.find(
+  //     (user: User) => user.id === value,
+  //   );
+  //   setUser(selectedUser);
+  // };
+
+  const handleSetUser = (selectedValues: string[]) => {
     const selectedUser = data?.response.users.find(
-      (user: User) => user.id === value,
+      (user: User) => user.id === selectedValues[0],
     );
-    setUser(selectedUser);
+    if (selectedUser) {
+      setUser(selectedUser);
+      setCustomEmail(null);
+    } else {
+      setUser(null);
+      setCustomEmail(selectedValues[0]);
+    }
   };
 
   const handleSetDiscount = (value: string, index: number) => {
@@ -300,6 +314,7 @@ export const Checkout = () => {
         ticketsToCreate.push({
           price: ticket.price,
           userId: user ? user.id : null,
+          customEmail: customEmail ? customEmail : user ? user.email : null,
           discountId: ticket.discount ? ticket.discount.id : null,
           discount: ticket.discount ? ticket.discount.name : null,
           seatId: ticket.seatId,
@@ -317,6 +332,7 @@ export const Checkout = () => {
         ticketsToCreate.push({
           price: ticket.price,
           userId: user ? user.id : null,
+          customEmail: customEmail ? customEmail : null,
           discountId: ticket.discount ? ticket.discount.id : null,
           eventId: event?.id,
           sectionId: ticket.pc.section.id,
@@ -397,7 +413,7 @@ export const Checkout = () => {
                             padding: 20,
                           }}
                         >
-                          <Flex style={{ width: '100%' }}>
+                          <Flex style={{ width: '100%' }} wrap>
                             <Flex gap={5} style={{ minWidth: 150 }}>
                               <Text>Category:</Text>
                               <Text>{item.name}</Text>
@@ -411,12 +427,12 @@ export const Checkout = () => {
                               <Text>{`${item.price} ${business?.currency}`}</Text>
                             </Flex>
                           </Flex>
-                          <Flex gap={30} justify="space-between">
+                          <Flex gap={30} justify="space-between" align="center">
                             <MinusOutlined
                               style={{ marginTop: 2, marginLeft: 4 }}
                               onClick={() => handleRemoveTicket(item.id, true)}
                             />
-                            <Text style={{ width: 20 }}>
+                            <Text style={{ width: 10 }}>
                               {
                                 tickets.filter(
                                   (ticket) => ticket.pc.id == item.id,
@@ -462,7 +478,7 @@ export const Checkout = () => {
                 ) : (
                   <Select
                     allowClear
-                    style={{ width: '80%' }}
+                    style={{ width: '100%' }}
                     showSearch
                     placeholder="Select event"
                     value={event?.id}
@@ -472,10 +488,15 @@ export const Checkout = () => {
                         .includes(input.toLowerCase())
                     }
                     defaultValue={event?.id}
-                    options={data?.response.events?.map((event: Event) => ({
-                      label: `${event.name} (${dayjs(event.date).format('DD. MM. - HH:mm')})`,
-                      value: event.id,
-                    }))}
+                    options={data?.response.events
+                      ?.slice()
+                      ?.sort((a: Event, b: Event) =>
+                        a.name.localeCompare(b.name),
+                      )
+                      ?.map((event: Event) => ({
+                        label: `${event.name} (${dayjs(event.date).format('DD. MM. YYYY - HH:mm')})`,
+                        value: event.id,
+                      }))}
                     onChange={handleEventChange}
                   />
                 )}
@@ -486,20 +507,26 @@ export const Checkout = () => {
                   <SelectSkeleton width={'100%'} />
                 ) : (
                   <Select
+                    mode="tags"
                     allowClear
-                    style={{ width: '80%' }}
+                    style={{ width: '100%' }}
                     showSearch
-                    placeholder="Select user"
+                    placeholder="Select user or enter email"
                     filterOption={(input, option) =>
                       String(option?.label ?? '')
                         .toLowerCase()
                         .includes(input.toLowerCase())
                     }
-                    value={user ? user.id : null}
-                    options={data?.response.users?.map((customer: User) => ({
-                      label: `${customer.firstName} ${customer.lastName} (${customer.email})`,
-                      value: customer.id,
-                    }))}
+                    value={user ? [user.id] : customEmail ? [customEmail] : []}
+                    options={data?.response.users
+                      ?.slice()
+                      ?.sort((a: User, b: User) =>
+                        a.lastName.localeCompare(b.lastName),
+                      )
+                      ?.map((customer: User) => ({
+                        label: `${customer.lastName} ${customer.firstName} (${customer.email})`,
+                        value: customer.id,
+                      }))}
                     onChange={handleSetUser}
                   />
                 )}

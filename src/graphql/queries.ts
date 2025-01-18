@@ -350,6 +350,17 @@ export const ORDERS_GRAPH = gql`
   }
 `;
 
+// Query to get event tickets sold
+export const EVENT_TICKETS_SOLD = gql`
+  query EventTicketsSold($meta: String!) {
+    getTicketsSold(meta: $meta) {
+      capacity
+      sold
+      eventId
+    }
+  }
+`;
+
 // Query to get tickets
 export const TICKETS_QUERY = gql`
   query TicketsList(
@@ -362,6 +373,7 @@ export const TICKETS_QUERY = gql`
         id
         price
         validated
+        customEmail
         discount {
           id
           name

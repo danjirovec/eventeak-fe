@@ -100,6 +100,11 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
           value: undefined,
         },
         {
+          field: 'customEmail',
+          operator: 'contains',
+          value: undefined,
+        },
+        {
           field: 'event.date',
           operator: 'between',
           value: [],
@@ -143,7 +148,8 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
     GetFieldsFromList<UserBusinessesListQuery>
   >({
     resource: 'businessUsers',
-    optionLabel: (item) => item.user.email,
+    optionLabel: (item) =>
+      `${item.user.lastName} ${item.user.firstName} (${item.user.email})`,
     optionValue: (item) => item.user.id,
     meta: {
       gqlQuery: USER_BUSINESSES_QUERY,
@@ -371,19 +377,56 @@ export const TicketList = ({ children }: React.PropsWithChildren) => {
             onFilter={(value, record) => {
               return value == record.user?.id;
             }}
-            render={(value, record) => (
-              <Space
-                onClick={() => edit('users', record.user ? record.user.id : '')}
-              >
-                <Text
-                  style={{
-                    whiteSpace: 'nowrap',
-                    color: '#007965',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
+            render={(value, record) => {
+              return (
+                <Space
+                  onClick={() =>
+                    edit('users', record.user ? record.user.id : '')
+                  }
                 >
-                  {record.user ? record.user.email : null}
+                  <Text
+                    style={{
+                      whiteSpace: 'nowrap',
+                      color: '#007965',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    {record.user
+                      ? `${record.user.firstName} ${record.user.lastName}`
+                      : null}
+                  </Text>
+                </Space>
+              );
+            }}
+          />
+          <Table.Column<Ticket>
+            dataIndex="customEmail"
+            title="Customer Email"
+            defaultFilteredValue={getDefaultFilter(
+              'customEmail',
+              filters,
+              'contains',
+            )}
+            filterIcon={<FilterFilled />}
+            filterDropdown={(props) => {
+              return (
+                <FilterDropdown
+                  {...props}
+                  mapValue={(selectedKeys) => [selectedKeys]}
+                >
+                  <Input style={{ width: 250 }} placeholder="Customer email" />
+                </FilterDropdown>
+              );
+            }}
+            onFilter={(value, record) => {
+              if (record.customEmail)
+                return record.customEmail.includes(String(value));
+            }}
+            render={(value, record) => (
+              <Space>
+                <Text style={{ whiteSpace: 'nowrap' }}>
+                  {record.customEmail ? record.customEmail : ''}
                 </Text>
               </Space>
             )}

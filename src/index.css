@@ -30,3 +30,7 @@
 html {
   overflow-y: scroll;
 }
+
+.ant-menu-submenu-selected {
+  background-color: #cce4e0;
+}

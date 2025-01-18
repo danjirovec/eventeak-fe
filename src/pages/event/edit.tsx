@@ -11,7 +11,7 @@ import {
   Select,
   Space,
 } from 'antd';
-import { Edit, ListButton, RefreshButton, useForm } from '@refinedev/antd';
+import { Edit, ListButton, useForm } from '@refinedev/antd';
 import { useGo, useList, useNavigation } from '@refinedev/core';
 import { UPDATE_EVENT_MUTATION } from 'graphql/mutations';
 import {
@@ -182,6 +182,7 @@ export const EditEvent = () => {
           headerButtons={({ listButtonProps }) => (
             <>
               <Button
+                disabled={new Date(formProps?.initialValues?.date) < new Date()}
                 onClick={() => replace(`/checkout?eventId=${id}`)}
                 type="primary"
                 icon={<ShoppingCartOutlined />}

@@ -11,9 +11,19 @@ import {
   useSelect,
   useTable,
 } from '@refinedev/antd';
-import { getDefaultFilter, useGo, useNavigation } from '@refinedev/core';
-import { Button, DatePicker, Flex, Input, Select, Space, Table } from 'antd';
-import { EVENTS_QUERY, TEMPLATES_QUERY, VENUES_QUERY } from 'graphql/queries';
+import {
+  getDefaultFilter,
+  useCustom,
+  useGo,
+  useNavigation,
+} from '@refinedev/core';
+import { Button, DatePicker, Input, Select, Space, Table } from 'antd';
+import {
+  EVENT_TICKETS_SOLD,
+  EVENTS_QUERY,
+  TEMPLATES_QUERY,
+  VENUES_QUERY,
+} from 'graphql/queries';
 import {
   CopyOutlined,
   FilterFilled,
@@ -140,6 +150,20 @@ export const EventList = ({ children }: React.PropsWithChildren) => {
         order: 'desc',
       },
     ],
+  });
+
+  const {
+    data: soldData,
+    isFetching: soldDataLoading,
+    refetch: soldRefetch,
+  } = useCustom({
+    url: '',
+    method: 'post',
+    meta: {
+      gqlQuery: EVENT_TICKETS_SOLD,
+      meta: JSON.stringify({ meta: business?.id }),
+      empty: !business,
+    },
   });
 
   return (
@@ -410,13 +434,36 @@ export const EventList = ({ children }: React.PropsWithChildren) => {
             )}
           />
           <Table.Column<Event>
+            dataIndex="tickets"
+            title="Tickets Sold"
+            render={(value, record) => (
+              <Space>
+                <Text style={{ whiteSpace: 'nowrap' }}>
+                  {soldData?.data.getTicketsSold.find(
+                    (event: any) => event.eventId === record.id,
+                  ) &&
+                    `${
+                      soldData.data.getTicketsSold.find(
+                        (event: any) => event.eventId === record.id,
+                      ).sold
+                    } / ${
+                      soldData.data.getTicketsSold.find(
+                        (event: any) => event.eventId === record.id,
+                      ).capacity
+                    }`}
+                </Text>
+              </Space>
+            )}
+          />
+          <Table.Column<Event>
             width={200}
             dataIndex="id"
             title="Actions"
             fixed="right"
-            render={(value) => (
+            render={(value, record) => (
               <Space>
                 <Button
+                  disabled={new Date(record.date) < new Date()}
                   onClick={() => replace(`/checkout?eventId=${value}`)}
                   style={{ width: 24, height: 24 }}
                   icon={<ShoppingCartOutlined width={24} height={24} />}

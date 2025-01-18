@@ -1,7 +1,6 @@
 import { useDocumentTitle } from '@refinedev/react-router-v6';
 import {
   BooleanField,
-  CloneButton,
   CreateButton,
   DeleteButton,
   EditButton,
@@ -16,7 +15,6 @@ import { VENUES_QUERY } from 'graphql/queries';
 import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
-  CopyOutlined,
   FilterFilled,
 } from '@ant-design/icons';
 import { Text } from 'components/text';

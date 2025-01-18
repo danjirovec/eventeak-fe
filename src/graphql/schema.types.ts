@@ -170,7 +170,6 @@ export type BooleanFieldComparison = {
 };
 
 export type Business = {
-  apiKey: Scalars['String']['output'];
   created: Scalars['DateTime']['output'];
   currency: Currency;
   id: Scalars['ID']['output'];
@@ -199,7 +198,6 @@ export type BusinessDeleteFilter = {
 };
 
 export type BusinessDeleteResponse = {
-  apiKey?: Maybe<Scalars['String']['output']>;
   created?: Maybe<Scalars['DateTime']['output']>;
   currency?: Maybe<Currency>;
   id?: Maybe<Scalars['ID']['output']>;
@@ -560,8 +558,8 @@ export type CreateMembershipType = {
   businessId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  pointsPerTicket?: InputMaybe<Scalars['Float']['input']>;
-  price?: InputMaybe<Scalars['Float']['input']>;
+  pointsPerTicket: Scalars['Float']['input'];
+  price: Scalars['Float']['input'];
 };
 
 export type CreateMembershipTypeSubscriptionFilterInput = {
@@ -776,6 +774,7 @@ export type CreateTicket = {
 
 export type CreateTicketExtra = {
   businessId: Scalars['ID']['input'];
+  customEmail?: InputMaybe<Scalars['String']['input']>;
   discount?: InputMaybe<Scalars['String']['input']>;
   discountId?: InputMaybe<Scalars['ID']['input']>;
   eventId: Scalars['ID']['input'];
@@ -1366,6 +1365,12 @@ export type EventSubscriptionFilter = {
   updated?: InputMaybe<DateFieldComparison>;
 };
 
+export type EventTicketSold = {
+  capacity: Scalars['Float']['output'];
+  eventId: Scalars['ID']['output'];
+  sold: Scalars['Float']['output'];
+};
+
 export type EventUpdateFilter = {
   and?: InputMaybe<Array<EventUpdateFilter>>;
   businessId?: InputMaybe<StringFieldComparison>;
@@ -1435,7 +1440,7 @@ export type Membership = {
   id: Scalars['ID']['output'];
   membershipType: MembershipType;
   points: Scalars['Float']['output'];
-  state?: Maybe<MembershipState>;
+  state: MembershipState;
   updated: Scalars['DateTime']['output'];
   user: User;
 };
@@ -1584,8 +1589,8 @@ export type MembershipType = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  pointsPerTicket?: Maybe<Scalars['Float']['output']>;
-  price?: Maybe<Scalars['Float']['output']>;
+  pointsPerTicket: Scalars['Float']['output'];
+  price: Scalars['Float']['output'];
   updated: Scalars['DateTime']['output'];
 };
 
@@ -2656,6 +2661,7 @@ export type Query = {
   getEventPrices: PriceCategoryAvailable;
   getOrderTotals: Array<OrderGraph>;
   getPublishableKey: PublishableKey;
+  getTicketsSold: Array<EventTicketSold>;
   getUserBenefits: UserBenefits;
   getUserBusinesses: BusinessConnection;
   getUserTickets: TicketSet;
@@ -2755,6 +2761,10 @@ export type QueryGetEventPricesArgs = {
 };
 
 export type QueryGetOrderTotalsArgs = {
+  meta: Scalars['String']['input'];
+};
+
+export type QueryGetTicketsSoldArgs = {
   meta: Scalars['String']['input'];
 };
 
@@ -3784,6 +3794,7 @@ export type TemplateUpdateFilter = {
 export type Ticket = {
   business: Business;
   created: Scalars['DateTime']['output'];
+  customEmail?: Maybe<Scalars['String']['output']>;
   discount?: Maybe<Discount>;
   event: Event;
   id: Scalars['ID']['output'];
@@ -3802,6 +3813,7 @@ export type TicketAggregateFilter = {
   business?: InputMaybe<TicketAggregateFilterBusinessAggregateFilter>;
   businessId?: InputMaybe<StringFieldComparison>;
   created?: InputMaybe<DateFieldComparison>;
+  customEmail?: InputMaybe<StringFieldComparison>;
   discount?: InputMaybe<TicketAggregateFilterDiscountAggregateFilter>;
   event?: InputMaybe<TicketAggregateFilterEventAggregateFilter>;
   eventId?: InputMaybe<StringFieldComparison>;
@@ -3917,6 +3929,7 @@ export type TicketAggregateFilterUserAggregateFilter = {
 export type TicketAggregateGroupBy = {
   businessId?: Maybe<Scalars['String']['output']>;
   created?: Maybe<Scalars['DateTime']['output']>;
+  customEmail?: Maybe<Scalars['String']['output']>;
   eventId?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
@@ -3965,6 +3978,7 @@ export type TicketConnection = {
 export type TicketCountAggregate = {
   businessId?: Maybe<Scalars['Int']['output']>;
   created?: Maybe<Scalars['Int']['output']>;
+  customEmail?: Maybe<Scalars['Int']['output']>;
   eventId?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   price?: Maybe<Scalars['Int']['output']>;
@@ -3980,6 +3994,7 @@ export type TicketDeleteFilter = {
   and?: InputMaybe<Array<TicketDeleteFilter>>;
   businessId?: InputMaybe<StringFieldComparison>;
   created?: InputMaybe<DateFieldComparison>;
+  customEmail?: InputMaybe<StringFieldComparison>;
   eventId?: InputMaybe<StringFieldComparison>;
   id?: InputMaybe<IdFilterComparison>;
   or?: InputMaybe<Array<TicketDeleteFilter>>;
@@ -3994,6 +4009,7 @@ export type TicketDeleteFilter = {
 
 export type TicketDeleteResponse = {
   created?: Maybe<Scalars['DateTime']['output']>;
+  customEmail?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
   updated?: Maybe<Scalars['DateTime']['output']>;
@@ -4005,6 +4021,7 @@ export type TicketFilter = {
   business?: InputMaybe<TicketFilterBusinessFilter>;
   businessId?: InputMaybe<StringFieldComparison>;
   created?: InputMaybe<DateFieldComparison>;
+  customEmail?: InputMaybe<StringFieldComparison>;
   discount?: InputMaybe<TicketFilterDiscountFilter>;
   event?: InputMaybe<TicketFilterEventFilter>;
   eventId?: InputMaybe<StringFieldComparison>;
@@ -4120,6 +4137,7 @@ export type TicketFilterUserFilter = {
 export type TicketMaxAggregate = {
   businessId?: Maybe<Scalars['String']['output']>;
   created?: Maybe<Scalars['DateTime']['output']>;
+  customEmail?: Maybe<Scalars['String']['output']>;
   eventId?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
@@ -4134,6 +4152,7 @@ export type TicketMaxAggregate = {
 export type TicketMinAggregate = {
   businessId?: Maybe<Scalars['String']['output']>;
   created?: Maybe<Scalars['DateTime']['output']>;
+  customEmail?: Maybe<Scalars['String']['output']>;
   eventId?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
@@ -4159,6 +4178,7 @@ export type TicketSort = {
 export type TicketSortFields =
   | 'businessId'
   | 'created'
+  | 'customEmail'
   | 'eventId'
   | 'id'
   | 'price'
@@ -4173,6 +4193,7 @@ export type TicketSubscriptionFilter = {
   and?: InputMaybe<Array<TicketSubscriptionFilter>>;
   businessId?: InputMaybe<StringFieldComparison>;
   created?: InputMaybe<DateFieldComparison>;
+  customEmail?: InputMaybe<StringFieldComparison>;
   eventId?: InputMaybe<StringFieldComparison>;
   id?: InputMaybe<IdFilterComparison>;
   or?: InputMaybe<Array<TicketSubscriptionFilter>>;
@@ -4193,6 +4214,7 @@ export type TicketUpdateFilter = {
   and?: InputMaybe<Array<TicketUpdateFilter>>;
   businessId?: InputMaybe<StringFieldComparison>;
   created?: InputMaybe<DateFieldComparison>;
+  customEmail?: InputMaybe<StringFieldComparison>;
   eventId?: InputMaybe<StringFieldComparison>;
   id?: InputMaybe<IdFilterComparison>;
   or?: InputMaybe<Array<TicketUpdateFilter>>;
@@ -4233,7 +4255,6 @@ export type UpdateBenefit = {
 };
 
 export type UpdateBusiness = {
-  apiKey?: InputMaybe<Scalars['String']['input']>;
   created?: InputMaybe<Scalars['DateTime']['input']>;
   currency?: InputMaybe<Currency>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -4249,11 +4270,8 @@ export type UpdateBusinessUser = {
 };
 
 export type UpdateDiscount = {
-  created?: InputMaybe<Scalars['DateTime']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  percentage?: InputMaybe<Scalars['Float']['input']>;
-  updated?: InputMaybe<Scalars['DateTime']['input']>;
+  name: Scalars['String']['input'];
+  percentage: Scalars['Float']['input'];
 };
 
 export type UpdateEvent = {
@@ -4398,7 +4416,7 @@ export type UpdateMembership = {
   expiryDate?: InputMaybe<Scalars['DateTime']['input']>;
   membershipTypeId?: InputMaybe<Scalars['ID']['input']>;
   points?: InputMaybe<Scalars['Float']['input']>;
-  state?: InputMaybe<MembershipState>;
+  state?: MembershipState;
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -4688,6 +4706,7 @@ export type UpdateTemplateDiscount = {
 };
 
 export type UpdateTicket = {
+  customEmail?: InputMaybe<Scalars['String']['input']>;
   discountId?: InputMaybe<Scalars['ID']['input']>;
   eventId?: InputMaybe<Scalars['ID']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
